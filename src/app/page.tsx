@@ -57,7 +57,7 @@ export default function Home() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
       {/* 1. Navbar */}
       <Navbar
         onCheckResumeClick={scrollToChecker}
@@ -110,7 +110,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* 8. Footer */}
+      {/* Footer */}
       <Footer
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onOpenTerms={() => setIsTermsOpen(true)}

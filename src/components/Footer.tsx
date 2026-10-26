@@ -46,7 +46,7 @@ export function Footer({ onOpenPrivacy, onOpenTerms, onOpenContact }: FooterProp
                   fontSize: '1.2rem',
                 }}
               >
-                T
+                S
               </div>
               <span
                 style={{
@@ -57,7 +57,7 @@ export function Footer({ onOpenPrivacy, onOpenTerms, onOpenContact }: FooterProp
                   letterSpacing: '-0.5px',
                 }}
               >
-                TALVYN
+                STRUCT
               </span>
             </div>
             <p style={{ color: '#BAC7D5', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '16px' }}>
@@ -174,7 +174,7 @@ export function Footer({ onOpenPrivacy, onOpenTerms, onOpenContact }: FooterProp
           }}
         >
           <div>
-            &copy; {new Date().getFullYear()} TALVYN. All rights reserved. Built for ambitious professionals.
+            &copy; {new Date().getFullYear()} STRUCT. All rights reserved. Built for ambitious professionals.
           </div>
           <div>
             Theme: Deep Navy &amp; Off-White Claymorphism

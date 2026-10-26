@@ -1,22 +1,25 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { LaunchGate } from '@/components/LaunchGate';
 
 export const metadata: Metadata = {
-  title: 'TALVYN — Premium AI Resume Score Checker & ATS Optimization',
+  title: 'STRUCT — Premium Resume Score Checker, ATS Optimization & Assessments',
   description:
-    'Understand your resume strengths, uncover job-specific skill gaps, and get practical suggestions to improve your next application.',
+    'Understand your resume strengths, uncover job-specific skill gaps, build ATS-optimized resumes, and conduct anti-cheat technical assessments.',
   keywords: [
     'resume score checker',
     'ATS resume scan',
     'AI resume analysis',
     'job description keyword matcher',
     'resume bullet improver',
-    'Talvyn',
+    'Struct',
+    'Assessments',
+    'Exam Portal',
   ],
-  authors: [{ name: 'TALVYN' }],
+  authors: [{ name: 'STRUCT' }],
   openGraph: {
-    title: 'TALVYN — AI Resume Score Checker',
-    description: 'Land more opportunities with an ATS-tested, higher-scoring resume.',
+    title: 'STRUCT — Production Ready ATS Platform & Assessments',
+    description: 'Land more opportunities with an ATS-tested, higher-scoring resume and verified technical assessments.',
     type: 'website',
   },
 };
@@ -34,7 +37,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <LaunchGate>{children}</LaunchGate>
+      </body>
     </html>
   );
 }

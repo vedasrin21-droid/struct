@@ -308,11 +308,7 @@ export function ResumeBuilder({
                 className="btn btn-secondary btn-sm"
                 title="Return to the Diagnostic Report"
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                <span>Diagnostic Results</span>
+                <span>&larr; Diagnostic Results</span>
               </button>
             )}
             {onBackToChecker && (
@@ -325,7 +321,7 @@ export function ResumeBuilder({
             )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--brand-dark)' }}>
-                TALVYN Resume Builder
+                STRUCT Resume Builder
               </span>
               <span style={{ fontSize: '0.72rem', color: 'var(--brand-text-muted)' }}>
                 ATS-Optimized Formatting &bull; Selectable Text Export
@@ -362,7 +358,7 @@ export function ResumeBuilder({
                 className="btn btn-soft btn-sm"
                 style={{ fontWeight: 700 }}
               >
-                <span>✨ Coach Findings ({initialAnalysis.bulletSuggestions.length})</span>
+                <span>Diagnostic Findings ({initialAnalysis.bulletSuggestions.length})</span>
               </button>
             )}
 
@@ -371,11 +367,6 @@ export function ResumeBuilder({
               className="btn btn-primary btn-sm"
               style={{ fontWeight: 700 }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <rect x="6" y="14" width="12" height="8"></rect>
-              </svg>
               <span>Download ATS PDF</span>
             </button>
           </div>
@@ -589,7 +580,7 @@ export function ResumeBuilder({
                       }}
                     >
                       <span style={{ fontSize: '0.78rem', color: 'var(--brand-primary)', fontWeight: 600 }}>
-                        💡 Coach suggestion tailored to your target competencies is available.
+                        💡 ATS-tailored executive summary recommendation available.
                       </span>
                       <button
                         type="button"
@@ -597,7 +588,7 @@ export function ResumeBuilder({
                         className="btn btn-secondary btn-sm"
                         style={{ padding: '4px 10px', fontSize: '0.72rem' }}
                       >
-                        Insert Coach Summary
+                        Insert Recommended Summary
                       </button>
                     </div>
                   )}
@@ -1632,7 +1623,7 @@ export function ResumeBuilder({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--brand-dark)', margin: 0 }}>
-                  ✨ Coach Diagnostic Suggestions
+                  ATS Diagnostic Findings &amp; Rewrites
                 </h3>
                 <p style={{ fontSize: '0.82rem', color: 'var(--brand-text-muted)', margin: 0 }}>
                   Review and customize suggestions before applying them.

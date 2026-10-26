@@ -27,45 +27,59 @@
   --accent-red-bg: #FEE2E2;
   --accent-red-border: #FECACA;
 
-  /* Claymorphism Shadow & Surface Tokens */
+  /* Colourmorphism & Depth Tokens */
   --clay-radius-sm: 10px;
   --clay-radius-md: 16px;
   --clay-radius-lg: 24px;
   --clay-radius-xl: 32px;
 
   --clay-card: 
-    0 12px 28px -4px rgba(10, 27, 56, 0.07),
-    0 4px 12px -2px rgba(10, 27, 56, 0.04),
-    inset 0 1px 1px rgba(255, 255, 255, 0.95),
-    inset 0 -1px 2px rgba(10, 27, 56, 0.03);
+    0 16px 36px -6px rgba(18, 51, 107, 0.10),
+    0 4px 14px -2px rgba(18, 51, 107, 0.05),
+    0 0 0 1px rgba(255, 255, 255, 0.85),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px rgba(18, 51, 107, 0.04);
 
   --clay-card-hover: 
-    0 20px 36px -6px rgba(10, 27, 56, 0.11),
-    0 6px 16px -2px rgba(10, 27, 56, 0.05),
-    inset 0 1px 1px rgba(255, 255, 255, 0.95),
-    inset 0 -1px 2px rgba(10, 27, 56, 0.03);
+    0 24px 44px -8px rgba(18, 51, 107, 0.16),
+    0 8px 18px -3px rgba(18, 51, 107, 0.08),
+    0 0 0 1px rgba(18, 51, 107, 0.12),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.95);
+
+  --colour-morph-card: 
+    0 20px 45px -10px rgba(18, 51, 107, 0.12),
+    0 6px 18px -3px rgba(18, 51, 107, 0.06),
+    0 0 0 1px rgba(220, 230, 245, 0.7),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.95);
+
+  --colour-morph-glow: 
+    0 0 60px -15px rgba(18, 51, 107, 0.22),
+    0 20px 40px -10px rgba(18, 51, 107, 0.14);
 
   --clay-elevated: 
-    0 24px 48px -10px rgba(10, 27, 56, 0.12),
-    0 8px 20px -3px rgba(10, 27, 56, 0.06),
+    0 28px 56px -12px rgba(18, 51, 107, 0.16),
+    0 10px 24px -4px rgba(18, 51, 107, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.9),
     inset 0 1.5px 1.5px rgba(255, 255, 255, 0.95);
 
   --clay-inset: 
-    inset 0 2px 4px rgba(10, 27, 56, 0.06),
-    inset 0 1px 2px rgba(10, 27, 56, 0.05);
+    inset 0 2px 4px rgba(10, 27, 56, 0.05),
+    inset 0 1px 2px rgba(10, 27, 56, 0.04);
 
   --clay-button-primary: 
-    0 8px 20px -2px rgba(18, 51, 107, 0.28),
-    0 3px 8px -1px rgba(18, 51, 107, 0.16),
-    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    0 8px 24px -2px rgba(18, 51, 107, 0.32),
+    0 3px 8px -1px rgba(18, 51, 107, 0.18),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.4);
 
   --clay-button-secondary: 
-    0 4px 12px rgba(10, 27, 56, 0.05),
-    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+    0 4px 14px rgba(18, 51, 107, 0.06),
+    0 0 0 1px rgba(228, 226, 220, 0.9),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
 
   --clay-pill: 
-    0 4px 10px rgba(10, 27, 56, 0.05),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    0 4px 12px rgba(18, 51, 107, 0.07),
+    0 0 0 1px rgba(220, 230, 245, 0.8),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
 /* Reset & Base */
@@ -375,3 +389,163 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #9E998B;
 }
+
+/* ========================================================
+   COLOURMORPHISM & PROFESSIONAL GEOMETRIC SHAPES
+   ======================================================== */
+
+/* Architectural Subtle Blueprint Grid */
+.ambient-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(18, 51, 107, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(18, 51, 107, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: radial-gradient(ellipse at 50% 30%, rgba(0, 0, 0, 0.8) 0%, transparent 75%);
+}
+
+/* Diffused Colourmorphic Glowing Orbs */
+.ambient-orb-primary {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(18, 51, 107, 0.09) 0%, rgba(220, 230, 245, 0.35) 45%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+  animation: floatSlow 14s ease-in-out infinite alternate;
+}
+
+.ambient-orb-secondary {
+  position: absolute;
+  width: 440px;
+  height: 440px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, rgba(238, 244, 252, 0.4) 50%, transparent 75%);
+  filter: blur(35px);
+  pointer-events: none;
+  z-index: 0;
+  animation: floatSlowRev 16s ease-in-out infinite alternate;
+}
+
+/* Subtle Geometric Floating Facet */
+.geo-facet {
+  position: absolute;
+  border: 1px solid rgba(18, 51, 107, 0.12);
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -5px rgba(18, 51, 107, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Colourmorphic Card */
+.colour-morph-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 249, 246, 0.92) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--clay-radius-lg);
+  border: 1px solid rgba(220, 230, 245, 0.95);
+  box-shadow: 
+    0 20px 45px -12px rgba(18, 51, 107, 0.12),
+    0 6px 18px -4px rgba(18, 51, 107, 0.06),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.98);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.colour-morph-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 26px 52px -10px rgba(18, 51, 107, 0.18),
+    0 8px 22px -4px rgba(18, 51, 107, 0.08),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.98);
+  border-color: rgba(18, 51, 107, 0.25);
+}
+
+/* Professional Monospace Metric Tag (No generic icon!) */
+.tech-tag {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--brand-soft-blue);
+  color: var(--brand-primary);
+  border: 1px solid rgba(18, 51, 107, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tech-tag-accent {
+  background: rgba(21, 128, 61, 0.1);
+  color: var(--accent-green);
+  border-color: rgba(21, 128, 61, 0.25);
+}
+
+/* Geometric Status Light Pip */
+.status-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* Tavi Speech Bubble with Colourmorphic Glass */
+.tavi-bubble {
+  position: relative;
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 16px 20px;
+  border: 1.5px solid var(--brand-soft-blue);
+  box-shadow: 
+    0 12px 28px -6px rgba(18, 51, 107, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+.tavi-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 28px;
+  width: 16px;
+  height: 16px;
+  background: #FFFFFF;
+  border-right: 1.5px solid var(--brand-soft-blue);
+  border-bottom: 1.5px solid var(--brand-soft-blue);
+  transform: rotate(45deg);
+}
+
+/* Keyframe Animations */
+@keyframes floatSlow {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(25px, -20px) scale(1.05); }
+  100% { transform: translate(-15px, 15px) scale(0.98); }
+}
+
+@keyframes floatSlowRev {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-20px, 20px) scale(1.04); }
+  100% { transform: translate(15px, -15px) scale(0.97); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+

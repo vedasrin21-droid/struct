@@ -447,7 +447,7 @@ export function analyzeResumeDeterministically(
         ? 'Ratio of matched target job description keywords against total extracted domain requirements.'
         : 'Domain keyword density benchmark for specified role tier. Supply a target job description for 1-to-1 gap analysis.',
       completenessFormula: 'Verification of core structural sections (Summary, Experience, Education, Skills, Projects, Certifications) and direct contact methods.',
-      disclaimer: 'TALVYN provides structural and semantic scoring based on documented recruitment best practices. Scores do not reproduce proprietary employer ATS algorithms or predict hiring decisions with certainty. Missing keywords reflect skills undocumented in the resume, not proof that the candidate lacks capability.'
+      disclaimer: 'STRUCT provides structural and semantic scoring based on documented recruitment best practices. Scores do not reproduce proprietary employer ATS algorithms or predict hiring decisions with certainty. Missing keywords reflect skills undocumented in the resume, not proof that the candidate lacks capability.'
     },
     scores: {
       atsReadability: {

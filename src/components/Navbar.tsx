@@ -65,7 +65,7 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
               letterSpacing: '-0.5px',
             }}
           >
-            T
+            S
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span
@@ -78,7 +78,7 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
                 lineHeight: 1.1,
               }}
             >
-              TALVYN
+              STRUCT
             </span>
             <span
               style={{
@@ -152,6 +152,24 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
             </button>
           )}
           <a
+            href="/assess"
+            style={{
+              color: 'var(--brand-text)',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'color 0.2s ease',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--brand-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--brand-text)')}
+          >
+            <span>Exam Portal</span>
+            <span className="pill" style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.65rem', padding: '1px 6px', fontWeight: 700 }}>Assess</span>
+          </a>
+          <a
             href="#faq"
             style={{
               color: 'var(--brand-text)',
@@ -184,10 +202,6 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
             style={{ display: 'inline-flex' }}
           >
             <span>Check My Resume</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
           </button>
 
           {/* Mobile Hamburger Button */}
@@ -250,6 +264,14 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
             style={{ color: 'var(--brand-text)', textDecoration: 'none', fontWeight: 600, padding: '8px 0' }}
           >
             How It Works
+          </a>
+          <a
+            href="/assess"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 700, padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <span>STRUCT Assess (Exam Portal)</span>
+            <span className="pill" style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.65rem', padding: '1px 6px' }}>New</span>
           </a>
           <a
             href="#faq"

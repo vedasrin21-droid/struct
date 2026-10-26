@@ -203,8 +203,9 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
                 flex: 1,
                 padding: '12px 18px',
                 borderRadius: '12px',
-                fontWeight: 600,
-                fontSize: '0.95rem',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                letterSpacing: '0.3px',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
@@ -213,7 +214,7 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
                 boxShadow: activeTab === 'upload' ? 'var(--clay-card)' : 'none',
               }}
             >
-              📄 Upload Document (PDF / DOCX)
+              01 / DOCUMENT UPLOAD (PDF, DOCX)
             </button>
             <button
               type="button"
@@ -225,8 +226,9 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
                 flex: 1,
                 padding: '12px 18px',
                 borderRadius: '12px',
-                fontWeight: 600,
-                fontSize: '0.95rem',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                letterSpacing: '0.3px',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
@@ -235,7 +237,7 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
                 boxShadow: activeTab === 'paste' ? 'var(--clay-card)' : 'none',
               }}
             >
-              ✍️ Paste Resume Text
+              02 / PASTE RESUME TEXT
             </button>
           </div>
 
@@ -258,31 +260,16 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
                       onChange={handleFileChange}
                       style={{ display: 'none' }}
                     />
-                    <div
-                      style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '20px',
-                        background: 'var(--brand-soft-blue)',
-                        color: 'var(--brand-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 16px auto',
-                        boxShadow: 'var(--clay-pill)',
-                      }}
-                    >
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                      </svg>
+                    <div style={{ marginBottom: '16px' }}>
+                      <span className="tech-tag" style={{ fontSize: '0.78rem', padding: '6px 14px' }}>
+                        FILE DROPZONE &bull; PDF / DOCX
+                      </span>
                     </div>
                     <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--brand-dark)', marginBottom: '6px' }}>
                       Drag &amp; drop your resume here, or <span style={{ color: 'var(--brand-primary)', textDecoration: 'underline' }}>browse</span>
                     </div>
-                    <p style={{ color: 'var(--brand-text-muted)', fontSize: '0.88rem' }}>
-                      Supports PDF (.pdf) and Microsoft Word (.docx) • Maximum file size 5 MB
+                    <p style={{ color: 'var(--brand-text-muted)', fontSize: '0.86rem' }}>
+                      Standard single-column PDF (.pdf) and Microsoft Word (.docx) &bull; Maximum file size 5 MB
                     </p>
                   </div>
                 ) : (
@@ -487,6 +474,54 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
               </div>
             )}
 
+            {/* Deterministic ATS Diagnostic Scanner Status Card (Active during loading) */}
+            {isLoading && (
+              <div
+                className="colour-morph-card"
+                style={{
+                  padding: '16px 20px',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  textAlign: 'left',
+                  background: 'linear-gradient(135deg, #FFFFFF 0%, #EEF4FC 100%)',
+                }}
+              >
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '16px',
+                    background: '#12336B',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(18, 51, 107, 0.25)',
+                    animation: 'spin 4s linear infinite',
+                  }}
+                >
+                  ⚙️
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span className="tech-tag" style={{ background: '#12336B', color: '#FFFFFF', fontSize: '0.65rem' }}>
+                      ATS DIAGNOSTIC ENGINE
+                    </span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--brand-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Diagnostic Parsing Active
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--brand-dark)' }}>
+                    {loadingStep || 'Analyzing Document Layers &amp; Formats...'}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Submit Button & Progress State */}
             <div style={{ textAlign: 'center' }}>
               <button
@@ -497,29 +532,13 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
                   width: '100%',
                   opacity: isLoading ? 0.8 : 1,
                   cursor: isLoading ? 'not-allowed' : 'pointer',
+                  letterSpacing: '0.3px',
                 }}
               >
                 {isLoading ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        border: '3px solid rgba(255,255,255,0.3)',
-                        borderTopColor: '#FFFFFF',
-                        borderRadius: '50%',
-                        animation: 'spin 0.8s linear infinite',
-                      }}
-                    />
-                    <span>{loadingStep || 'Analyzing Resume...'}</span>
-                  </div>
+                  <span>Processing ATS Scan...</span>
                 ) : (
-                  <>
-                    <span>Analyze My Resume</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                    </svg>
-                  </>
+                  <span>Run Full ATS Diagnosis</span>
                 )}
               </button>
 
@@ -528,17 +547,23 @@ export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '16px',
-                  marginTop: '16px',
-                  fontSize: '0.8rem',
-                  color: 'var(--brand-text-muted)',
+                  gap: '20px',
+                  marginTop: '18px',
+                  flexWrap: 'wrap',
                 }}
               >
-                <span>🔒 Ephemeral processing (no files saved)</span>
-                <span>•</span>
-                <span>⚡ Instant analysis</span>
-                <span>•</span>
-                <span>🎯 ATS simulated engine</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--brand-text-muted)' }}>
+                  <span className="status-pip" style={{ color: 'var(--accent-green)' }} />
+                  <span style={{ fontWeight: 600 }}>Zero Persistence (In-Memory Only)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--brand-text-muted)' }}>
+                  <span className="status-pip" style={{ color: 'var(--brand-primary)' }} />
+                  <span style={{ fontWeight: 600 }}>Instant Diagnostic Engine</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--brand-text-muted)' }}>
+                  <span className="status-pip" style={{ color: 'var(--brand-primary)' }} />
+                  <span style={{ fontWeight: 600 }}>Deterministic ATS Verification</span>
+                </div>
               </div>
             </div>
           </form>

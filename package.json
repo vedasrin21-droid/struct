@@ -1,5 +1,5 @@
 {
-  "name": "talvyn",
+  "name": "struct",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npx tsx test-suite.mjs"
+    "test": "npx tsx test-suite.mjs",
+    "test:assess": "npx tsx assess-test-suite.mjs",
+    "test:all": "npx tsx test-suite.mjs && npx tsx assess-test-suite.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.60.0",

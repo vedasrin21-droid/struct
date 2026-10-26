@@ -54,7 +54,7 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
         {/* Printable Header (Visible only when printed) */}
         <div className="print-header" style={{ display: 'none' }}>
           <h1 style={{ fontSize: '1.8rem', color: '#12336B', marginBottom: '4px' }}>
-            TALVYN — Resume Diagnostic Report
+            STRUCT — Resume Diagnostic Report
           </h1>
           <p style={{ fontSize: '0.9rem', color: '#5E6C84' }}>
             Document: {result.fileName} • Generated on {new Date(result.timestamp).toLocaleDateString()} • Overall Score: {result.overallScore}/100 ({result.overallVerdict})
@@ -102,10 +102,6 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
                   boxShadow: 'var(--clay-button-primary)',
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9"></path>
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                </svg>
                 <span>Edit in Resume Builder</span>
               </button>
             )}
@@ -114,11 +110,6 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
               className="btn btn-secondary btn-sm"
               title="Print report or save as PDF"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <rect x="6" y="14" width="12" height="8"></rect>
-              </svg>
               <span>Print / Save Report</span>
             </button>
             <button
@@ -130,14 +121,59 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
           </div>
         </div>
 
+        {/* Executive ATS Diagnostic Verdict Banner */}
+        <div
+          className="colour-morph-card"
+          style={{
+            padding: '20px 24px',
+            marginBottom: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px',
+            background: 'linear-gradient(135deg, #FFFFFF 0%, #EEF4FC 100%)',
+            border: '1.5px solid rgba(220, 230, 245, 0.95)',
+          }}
+        >
+          <div
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '16px',
+              background: result.overallScore >= 80 ? '#15803D' : '#12336B',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.6rem',
+              flexShrink: 0,
+              boxShadow: '0 4px 12px rgba(18, 51, 107, 0.2)',
+            }}
+          >
+            {result.overallScore >= 80 ? '✓' : '⚡'}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span className="tech-tag" style={{ background: '#12336B', color: '#FFFFFF' }}>
+                ATS DIAGNOSTIC VERDICT
+              </span>
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--brand-primary)', letterSpacing: '0.5px' }}>
+                {result.overallScore >= 80 ? 'APPLICATION READY &bull; HIGH INTERVIEW LIKELIHOOD' : 'TARGETED OPTIMIZATIONS IDENTIFIED'}
+              </span>
+            </div>
+            <div style={{ fontSize: '0.92rem', color: 'var(--brand-dark)', fontWeight: 600, lineHeight: 1.5 }}>
+              {result.overallScore >= 80
+                ? 'Resume demonstrates strong quantifiable achievements. Review target keyword matches below to maximize recruiter screening passes.'
+                : 'Deterministic parsing has identified high-leverage opportunities to elevate your bullet points with measurable metrics and address competency gaps.'}
+            </div>
+          </div>
+        </div>
+
         {/* 1. Executive Summary & Overall Score Card */}
         <div
-          className="clay-card-static"
+          className="colour-morph-card"
           style={{
             padding: '36px',
             marginBottom: '32px',
-            background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF9F6 100%)',
-            border: '1.5px solid rgba(220, 230, 245, 0.9)',
           }}
         >
           <div
@@ -423,7 +459,7 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
           </div>
           <p style={{ fontSize: '0.82rem', color: 'var(--brand-text)', lineHeight: 1.5, marginBottom: '10px' }}>
             {result.scoringBreakdown?.disclaimer ||
-              'TALVYN evaluates measurable structural and semantic resume criteria using deterministic benchmarks. It does not replicate proprietary employer ATS algorithms or predict hiring decisions with certainty.'}
+              'STRUCT evaluates measurable structural and semantic resume criteria using deterministic benchmarks. It does not replicate proprietary employer ATS algorithms or predict hiring decisions with certainty.'}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', fontSize: '0.78rem', color: 'var(--brand-text-muted)' }}>
             <div>
@@ -773,10 +809,6 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
                 boxShadow: 'var(--clay-button-primary)',
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
               <span>Edit &amp; Polish in Resume Builder</span>
             </button>
           )}
@@ -784,11 +816,6 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
             onClick={handlePrint}
             className="btn btn-secondary btn-lg"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
             <span>Print / Save PDF Report</span>
           </button>
           <button
@@ -796,10 +823,6 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
             className="btn btn-secondary btn-lg"
           >
             <span>Analyze Another Resume</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
           </button>
         </div>
       </div>
