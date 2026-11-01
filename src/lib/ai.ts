@@ -62,8 +62,9 @@ Output strictly valid JSON matching this schema:
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      // Using gemini-1.5-flash or gemini-2.5-flash
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+      // Using gemini-3.5-flash-lite (high performance, modern Google AI model)
+      const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
