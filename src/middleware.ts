@@ -16,9 +16,7 @@ if (hasClerkKeys) {
     '/privacy(.*)',
     '/refund(.*)',
     '/pricing(.*)',
-    '/api/assess/auth/login(.*)',
-    '/api/assess/auth/logout(.*)',
-    '/api/assess/auth/session(.*)',
+    '/api/assess/auth/(.*)',
     '/api/assess/candidate(.*)',
     '/assess/exam(.*)',
     '/assess/instructions(.*)',
@@ -52,15 +50,20 @@ if (hasClerkKeys) {
       return NextResponse.next();
     }
 
-    // Never allow candidate tokens to bypass admin, superadmin, or portal routes
-    if (pathname.startsWith('/assess/admin') || pathname.startsWith('/superadmin') || pathname.startsWith('/portal')) {
-      await auth.protect();
+    // Allow users with valid STRUCT token to access portal and candidate routes
+    const examToken = req.cookies.get('struct_exam_token')?.value || req.cookies.get('talvyn_assess_token')?.value;
+    if (examToken && (pathname.startsWith('/portal') || isCandidateAssessmentRoute(req))) {
       return NextResponse.next();
     }
 
-    // Allow Mode B candidates with canonical cookie struct_exam_token to access candidate assessment routes only
-    const examToken = req.cookies.get('struct_exam_token')?.value || req.cookies.get('talvyn_assess_token')?.value;
-    if (examToken && isCandidateAssessmentRoute(req)) {
+    // Allow admin access if STRUCT token present (page and API perform strict server-side RBAC validation)
+    if (examToken && pathname.startsWith('/assess/admin')) {
+      return NextResponse.next();
+    }
+
+    // Protect administrative routes with Clerk when using Clerk auth
+    if (pathname.startsWith('/assess/admin') || pathname.startsWith('/superadmin') || pathname.startsWith('/portal')) {
+      await auth.protect();
       return NextResponse.next();
     }
 
