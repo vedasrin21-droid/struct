@@ -4,6 +4,20 @@ import { enhanceWithAiIfAvailable } from '@/lib/ai';
 import { ExperienceLevel } from '@/types';
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
+import { resolveEntitlementIdentity } from '@/lib/payments/guestAuth';
+import {
+  reserveEntitlement,
+  settleEntitlementReservation,
+  releaseEntitlementReservation,
+  heartbeatReservation,
+  isReservationActive,
+  getEntitlementBalance,
+  HEARTBEAT_INTERVAL_MS,
+  markOperationActive,
+  markOperationComplete,
+  isOperationActive,
+} from '@/lib/payments/service';
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -106,7 +120,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Deterministic Scoring & Matching
+    // 1. Deterministic Scoring & Matching (Always free for all visitors)
     const deterministicResult = analyzeResumeDeterministically(
       resumeText,
       targetJobTitle,
@@ -115,16 +129,147 @@ export async function POST(req: NextRequest) {
       fileName
     );
 
-    // 2. AI Enhancement Layer (falls back cleanly if no key or API error)
-    const finalResult = await enhanceWithAiIfAvailable({
-      resumeText,
-      targetJobTitle,
-      targetJobDescription,
-      deterministicResult,
+    // 2. Entitlement Gating for AI Enhancement: Atomically reserve 1 credit before expensive AI invocation
+    const identity = await resolveEntitlementIdentity(req);
+    let reservationSuccess = false;
+
+    const idempotencyKey = req.headers.get('x-idempotency-key') || req.headers.get('idempotency-key') || '';
+    const operationRefId = idempotencyKey ? `idem_${idempotencyKey.slice(0, 64)}` : deterministicResult.id;
+
+    // Cross-instance concurrency guard: reject duplicate parallel calls for the exact same in-flight operation
+    if (isOperationActive(operationRefId) || (await isReservationActive(operationRefId))) {
+      return NextResponse.json(
+        {
+          error: 'REQUEST_IN_FLIGHT',
+          message: 'An analysis is currently processing for this request. Please wait for it to complete.',
+        },
+        { status: 409 }
+      );
+    }
+
+    if (identity) {
+      const reserveRes = await reserveEntitlement({
+        email: identity.email,
+        featureType: 'resume_ai_usage',
+        referenceId: operationRefId,
+      });
+      reservationSuccess = reserveRes.success;
+    }
+
+    // If caller has no active credits / reservation failed, return full deterministic report with upgrade offer
+    if (!reservationSuccess) {
+      return NextResponse.json({
+        ...deterministicResult,
+        entitlement: {
+          hasAccess: false,
+          consumed: false,
+          remainingUsages: 0,
+          upgradeOffer: {
+            productId: 'resume_ai_pack_49',
+            name: 'Resume AI Enhancement (2 Usages)',
+            priceRupees: 49,
+            amountPaise: 4900,
+          },
+        },
+      }, { status: 200 });
+    }
+
+    // 3. Credit is atomically reserved. Mark active in-flight and attempt AI Enhancement Layer
+    markOperationActive(operationRefId, identity!.email);
+
+    // Heartbeat timer maintains durable database lease during long-running AI requests
+    const heartbeatTimer = setInterval(async () => {
+      try {
+        await heartbeatReservation({ referenceId: operationRefId });
+      } catch (hbErr) {
+        console.warn('[Talvyn API] Heartbeat warning:', hbErr);
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+
+    let finalResult;
+    try {
+      finalResult = await enhanceWithAiIfAvailable({
+        resumeText,
+        targetJobTitle,
+        targetJobDescription,
+        deterministicResult,
+      });
+    } catch (aiErr) {
+      console.error('[Talvyn API] Unexpected AI error during generation:', aiErr);
+      // Release reservation on uncaught error
+      const releaseRes = await releaseEntitlementReservation({
+        email: identity!.email,
+        featureType: 'resume_ai_usage',
+        referenceId: operationRefId,
+      });
+
+      return NextResponse.json({
+        ...deterministicResult,
+        entitlement: {
+          hasAccess: true,
+          consumed: false,
+          remainingUsages: releaseRes.remainingBalance,
+          notice: 'AI provider error. Your usage credit was not consumed.',
+          email: identity!.email,
+        },
+      }, { status: 200 });
+    } finally {
+      clearInterval(heartbeatTimer);
+      markOperationComplete(operationRefId);
+    }
+
+    // 4. Settle reservation if AI enhancement succeeded
+    if (finalResult && finalResult.isAiEnhanced) {
+      try {
+        const settleRes = await settleEntitlementReservation({
+          email: identity!.email,
+          featureType: 'resume_ai_usage',
+          referenceId: operationRefId,
+        });
+
+        return NextResponse.json({
+          ...finalResult,
+          entitlement: {
+            hasAccess: true,
+            consumed: true,
+            remainingUsages: settleRes.remainingBalance,
+            email: identity!.email,
+          },
+        }, { status: 200 });
+      } catch (settleErr: any) {
+        console.warn('[Talvyn API] Settlement failed because reservation was released:', settleErr?.message);
+        // CRITICAL INVARIANT: A successful AI operation must NEVER return a paid result after credit was released/recovered!
+        const currentBal = await getEntitlementBalance(identity!.email, 'resume_ai_usage');
+        return NextResponse.json({
+          ...deterministicResult,
+          entitlement: {
+            hasAccess: false,
+            consumed: false,
+            remainingUsages: currentBal.remainingBalance,
+            notice: 'Your analysis session reservation expired and was refunded to your balance. Your credit was not consumed. Please retry.',
+            email: identity!.email,
+          },
+        }, { status: 200 });
+      }
+    }
+
+    // 5. If AI failed, timed out, or fell back to deterministic, release reserved credit back to user
+    const releaseRes = await releaseEntitlementReservation({
+      email: identity!.email,
+      featureType: 'resume_ai_usage',
+      referenceId: operationRefId,
     });
 
-    // Zero persistence: Nothing is saved to disk or database
-    return NextResponse.json(finalResult, { status: 200 });
+    return NextResponse.json({
+      ...deterministicResult,
+      entitlement: {
+        hasAccess: true,
+        consumed: false,
+        remainingUsages: releaseRes.remainingBalance,
+        notice: 'AI provider temporarily unavailable. Your usage credit was not consumed.',
+        email: identity!.email,
+      },
+    }, { status: 200 });
   } catch (error: unknown) {
     console.error('[Talvyn API] Unexpected analysis error:', error);
     return NextResponse.json(
@@ -133,3 +278,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

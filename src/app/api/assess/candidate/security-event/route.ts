@@ -16,7 +16,10 @@ export async function POST(request: Request) {
     const db = getDb();
 
     // Verify candidate owns this attempt
-    const attempt = db.prepare('SELECT id, status FROM attempts WHERE id = ? AND candidate_id = ?').get(attemptId, candidate.id) as any;
+    const attempt = await db.queryOne<any>(
+      'SELECT id, status FROM attempts WHERE id = $1 AND candidate_id = $2',
+      [attemptId, candidate.id]
+    );
     if (!attempt) {
       return NextResponse.json({ error: 'Invalid attempt reference' }, { status: 403 });
     }
@@ -25,10 +28,10 @@ export async function POST(request: Request) {
     const validSeverity = ['low', 'medium', 'high'].includes(severity) ? severity : 'low';
     const now = Date.now();
 
-    db.prepare(`
+    await db.execute(`
       INSERT INTO security_events (id, attempt_id, candidate_id, exam_id, event_type, severity, details, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [
       eventId,
       attemptId,
       candidate.id,
@@ -37,7 +40,7 @@ export async function POST(request: Request) {
       validSeverity,
       details ? String(details).slice(0, 500) : '',
       now
-    );
+    ]);
 
     return NextResponse.json({ success: true, eventId, loggedAt: now });
   } catch (error: any) {

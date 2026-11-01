@@ -9,13 +9,25 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const db = getDb();
 
     // 1. Get Exam
-    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(examId) as any;
+    const exam = await db.queryOne<any>('SELECT * FROM exams WHERE id = $1', [examId]);
     if (!exam) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
 
-    // 2. Get Attempt
-    const attempt = db.prepare('SELECT * FROM attempts WHERE exam_id = ? AND candidate_id = ?').get(examId, candidate.id) as any;
+    // 2. Verify candidate assignment to prevent enumeration/guessing
+    const assignment = await db.queryOne<any>(
+      'SELECT id, status FROM exam_assignments WHERE exam_id = $1 AND candidate_id = $2',
+      [examId, candidate.id]
+    );
+    if (!assignment) {
+      return NextResponse.json({ error: 'You are not assigned to this examination' }, { status: 403 });
+    }
+
+    // 3. Get Attempt
+    const attempt = await db.queryOne<any>(
+      'SELECT * FROM attempts WHERE exam_id = $1 AND candidate_id = $2',
+      [examId, candidate.id]
+    );
     if (!attempt) {
       return NextResponse.json({
         hasStarted: false,
@@ -34,52 +46,57 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 
     const now = Date.now();
-    const isExpired = attempt.status === 'in_progress' && now > attempt.deadline_time;
+    const deadlineTime = Number(attempt.deadline_time);
+    const isExpired = attempt.status === 'in_progress' && now > deadlineTime;
 
     if (isExpired && attempt.status === 'in_progress') {
-      db.prepare("UPDATE attempts SET status = 'expired' WHERE id = ?").run(attempt.id);
-      db.prepare("UPDATE exam_assignments SET status = 'expired' WHERE exam_id = ? AND candidate_id = ?").run(examId, candidate.id);
+      await db.execute("UPDATE attempts SET status = 'expired' WHERE id = $1", [attempt.id]);
+      await db.execute("UPDATE exam_assignments SET status = 'expired' WHERE exam_id = $1 AND candidate_id = $2", [examId, candidate.id]);
       attempt.status = 'expired';
     }
 
     // 3. Fetch questions attached to this attempt (or fallback to exam_questions)
-    let questionRows = db.prepare(`
+    const qResult = await db.query<any>(`
       SELECT 
         q.id, q.text, q.category, q.difficulty, q.marks, q.negative_marks, q.options_json,
         aq.order_index, COALESCE(aq.is_mandatory, 0) as is_mandatory,
         q.correct_option_index, q.explanation
       FROM attempt_questions aq
       JOIN questions q ON q.id = aq.question_id
-      WHERE aq.attempt_id = ?
+      WHERE aq.attempt_id = $1
       ORDER BY aq.order_index ASC
-    `).all(attempt.id) as any[];
+    `, [attempt.id]);
+
+    let questionRows = qResult.rows;
 
     if (questionRows.length === 0) {
-      questionRows = db.prepare(`
+      const fallbackResult = await db.query<any>(`
         SELECT 
           q.id, q.text, q.category, q.difficulty, q.marks, q.negative_marks, q.options_json,
           eq.order_index, COALESCE(eq.is_mandatory, 0) as is_mandatory,
           q.correct_option_index, q.explanation
         FROM exam_questions eq
         JOIN questions q ON q.id = eq.question_id
-        WHERE eq.exam_id = ?
+        WHERE eq.exam_id = $1
         ORDER BY eq.order_index ASC
-      `).all(examId) as any[];
+      `, [examId]);
+      questionRows = fallbackResult.rows;
     }
 
     // 4. Fetch saved answers
-    const savedAnswersRows = db.prepare(`
+    const ansResult = await db.query<any>(`
       SELECT question_id, selected_option_index, is_marked_for_review, version
       FROM attempt_answers
-      WHERE attempt_id = ?
-    `).all(attempt.id) as any[];
+      WHERE attempt_id = $1
+    `, [attempt.id]);
 
+    const savedAnswersRows = ansResult.rows;
     const savedAnswersMap: Record<string, { selectedOption: number | null; isMarkedForReview: boolean; version: number }> = {};
     savedAnswersRows.forEach(a => {
       savedAnswersMap[a.question_id] = {
-        selectedOption: a.selected_option_index,
+        selectedOption: a.selected_option_index !== null ? Number(a.selected_option_index) : null,
         isMarkedForReview: Boolean(a.is_marked_for_review),
-        version: a.version,
+        version: Number(a.version || 1),
       };
     });
 
@@ -92,15 +109,15 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         text: q.text,
         category: q.category,
         difficulty: q.difficulty,
-        marks: q.marks,
-        negative_marks: q.negative_marks,
+        marks: Number(q.marks),
+        negative_marks: Number(q.negative_marks),
         options: JSON.parse(q.options_json),
-        orderIndex: q.order_index,
+        orderIndex: Number(q.order_index),
         isMandatory: Boolean(q.is_mandatory),
       };
 
       if (canSeeAnswers) {
-        base.correctOptionIndex = q.correct_option_index;
+        base.correctOptionIndex = Number(q.correct_option_index);
         base.explanation = q.explanation;
       }
 
@@ -108,16 +125,16 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     });
 
     const remainingSeconds = attempt.status === 'in_progress'
-      ? Math.max(0, Math.floor((attempt.deadline_time - now) / 1000))
+      ? Math.max(0, Math.floor((deadlineTime - now) / 1000))
       : 0;
 
     return NextResponse.json({
       hasStarted: true,
       attemptId: attempt.id,
       status: attempt.status,
-      startTime: attempt.start_time,
-      deadlineTime: attempt.deadline_time,
-      submittedAt: attempt.submitted_at,
+      startTime: Number(attempt.start_time),
+      deadlineTime: deadlineTime,
+      submittedAt: attempt.submitted_at ? Number(attempt.submitted_at) : null,
       remainingSeconds,
       serverTime: now,
       score: Boolean(exam.results_released) ? attempt.score : null,

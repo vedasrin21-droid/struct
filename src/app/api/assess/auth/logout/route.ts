@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser, deleteSession, COOKIE_NAME } from '@/lib/assess/auth';
+import { deleteSession, COOKIE_NAME } from '@/lib/assess/auth';
 import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     if (token) {
-      deleteSession(token);
+      await deleteSession(token);
     }
 
     const response = NextResponse.json({ success: true, message: 'Logged out successfully' });
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to logout' }, { status: 500 });
   }
 }

@@ -40,13 +40,6 @@ export async function POST(request: Request) {
     const errors: Array<{ row: number; error: string }> = [];
     const createdQuestions: any[] = [];
 
-    const insertStmt = db.prepare(`
-      INSERT INTO questions (
-        id, text, category, difficulty, marks, negative_marks, explanation,
-        options_json, correct_option_index, created_at
-      ) VALUES (?, ?, ?, ?, 1.0, 0.25, ?, ?, ?, ?)
-    `);
-
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
       const cells: string[] = [];
@@ -104,7 +97,12 @@ export async function POST(request: Request) {
 
       const qId = 'q_' + crypto.randomUUID().slice(0, 8);
       try {
-        insertStmt.run(
+        await db.execute(`
+          INSERT INTO questions (
+            id, text, category, difficulty, marks, negative_marks, explanation,
+            options_json, correct_option_index, created_at
+          ) VALUES ($1, $2, $3, $4, 1.0, 0.25, $5, $6, $7, $8)
+        `, [
           qId,
           text,
           category,
@@ -113,22 +111,22 @@ export async function POST(request: Request) {
           JSON.stringify(options),
           correctIndex,
           now
-        );
+        ]);
         createdQuestions.push({ id: qId, text, category });
       } catch (err: any) {
         errors.push({ row: rowNum, error: err.message || 'Database insert failed' });
       }
     }
 
-    db.prepare(`
+    await db.execute(`
       INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, created_at)
-      VALUES (?, ?, 'csv_import_questions', 'question', 'batch', ?, ?)
-    `).run(
+      VALUES ($1, $2, 'csv_import_questions', 'question', 'batch', $3, $4)
+    `, [
       'aud_' + crypto.randomUUID().slice(0, 8),
       admin.id,
       `Imported ${createdQuestions.length} questions, ${errors.length} errors`,
       now
-    );
+    ]);
 
     return NextResponse.json({
       success: true,

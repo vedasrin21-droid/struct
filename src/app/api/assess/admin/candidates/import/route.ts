@@ -37,20 +37,9 @@ export async function POST(request: Request) {
     const createdCandidates: Array<{ id: string; email: string; name: string }> = [];
     const seenEmailsInCsv = new Set<string>();
 
-    const checkExistingStmt = db.prepare('SELECT id FROM users WHERE email = ? COLLATE NOCASE');
-    const insertStmt = db.prepare(`
-      INSERT INTO users (id, email, password_hash, salt, role, name, department, college, status, created_at)
-      VALUES (?, ?, ?, ?, 'candidate', ?, ?, ?, 'active', ?)
-    `);
-    const assignStmt = db.prepare(`
-      INSERT OR IGNORE INTO exam_assignments (id, exam_id, candidate_id, assigned_at, status)
-      VALUES (?, ?, ?, ?, 'assigned')
-    `);
-
     // Parse lines (skipping header)
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
-      // Basic CSV token parser supporting quotes
       const cells: string[] = [];
       let current = '';
       let insideQuotes = false;
@@ -89,7 +78,10 @@ export async function POST(request: Request) {
       seenEmailsInCsv.add(email);
 
       // Check database duplicate
-      const existing = checkExistingStmt.get(email);
+      const existing = await db.queryOne<{ id: string }>(
+        'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+        [email]
+      );
       if (existing) {
         errors.push({ row: rowNum, email, error: 'Candidate already exists in database' });
         continue;
@@ -100,9 +92,17 @@ export async function POST(request: Request) {
       const { hash, salt } = hashPassword(passwordToHash);
 
       try {
-        insertStmt.run(userId, email, hash, salt, name, department, college, now);
+        await db.execute(`
+          INSERT INTO users (id, email, password_hash, salt, role, name, department, college, status, created_at)
+          VALUES ($1, $2, $3, $4, 'candidate', $5, $6, $7, 'active', $8)
+        `, [userId, email, hash, salt, name, department, college, now]);
+
         if (assignExamId) {
-          assignStmt.run(`asg_${assignExamId}_${userId}`, assignExamId, userId, now);
+          await db.execute(`
+            INSERT INTO exam_assignments (id, exam_id, candidate_id, assigned_at, status)
+            VALUES ($1, $2, $3, $4, 'assigned')
+            ON CONFLICT (exam_id, candidate_id) DO NOTHING
+          `, [`asg_${assignExamId}_${userId}`, assignExamId, userId, now]);
         }
         createdCandidates.push({ id: userId, email, name });
       } catch (err: any) {
@@ -111,15 +111,15 @@ export async function POST(request: Request) {
     }
 
     // Log admin audit
-    db.prepare(`
+    await db.execute(`
       INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, created_at)
-      VALUES (?, ?, 'csv_import_candidates', 'user', 'batch', ?, ?)
-    `).run(
+      VALUES ($1, $2, 'csv_import_candidates', 'user', 'batch', $3, $4)
+    `, [
       'aud_' + crypto.randomUUID().slice(0, 8),
       admin.id,
       `Imported ${createdCandidates.length} candidates, ${errors.length} errors`,
       now
-    );
+    ]);
 
     return NextResponse.json({
       success: true,

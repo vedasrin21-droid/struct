@@ -7,28 +7,32 @@ export function FaqSection() {
 
   const faqs = [
     {
-      q: 'Which document formats and file sizes are supported?',
-      a: 'TALVYN accepts PDF (.pdf), Microsoft Word (.docx), and plain text (.txt) files up to 5 MB in size. For the best parsing accuracy, we recommend uploading standard single-column PDF or DOCX documents without password protection.',
+      q: 'What is STRUCT and how does it differ from traditional assessment platforms?',
+      a: 'STRUCT is an end-to-end technical assessment and AI interview coaching SaaS platform. Unlike legacy test suites, STRUCT combines proctored high-concurrency coding assessments with adaptive AI mock interviews and deep ATS resume alignment. Candidates benchmark their engineering readiness, while engineering teams hire verified top talent with zero cheat vulnerability.',
     },
     {
-      q: 'How does the TALVYN scoring engine calculate my resume score?',
+      q: 'How does STRUCT’s anti-cheat shield and telemetry proctoring work?',
+      a: 'STRUCT enforces multi-layer anti-cheat defense during live technical assessments: non-destructive telemetry monitors tab switching and window blurs, clipboard poisoning deters external AI copy-pasting, homoglyph traps detect OCR screen readers, and code replay analysis flags impossible keystroke bursts.',
+    },
+    {
+      q: 'How does the STRUCT scoring engine evaluate my resume and profile?',
       a: 'Our scoring engine uses a weighted composite formula: 30% ATS Readability (parser extraction, section headers, contact syntax), 35% Content Quality (action verb frequency, quantifiable metric density, absence of weak duty phrases), 25% Target Job Match (keyword alignment and competency coverage), and 10% Completeness (core sections and external verification links).',
     },
     {
-      q: 'How does the job description matching work?',
-      a: 'When you paste a target job description, TALVYN tokenizes the requirements, identifies essential technical skills, tools, and domain keywords, and cross-references them against your resume. You receive a direct percentage match score along with a clear list of matched skills and missing keyword opportunities.',
+      q: 'When will AI Mock Technical Interviews launch?',
+      a: 'AI Mock Technical Interviews are officially scheduled for Version 2. In Version 1, candidates have complete access to timed proctored practice assessments, public catalog self-enrollment, ATS resume diagnostic scans, Google X-Y-Z bullet enhancements, and institutional recruiting tests.',
     },
     {
-      q: 'Are the bullet point suggestions AI-generated or rule-based?',
-      a: 'TALVYN uses a hybrid approach. It first deterministically analyzes your real resume bullets for passive phrasing and missing metrics. If an AI provider (such as Gemini or OpenAI) is connected, it crafts tailored, context-aware rewrites grounded strictly in your supplied experience. If no AI key is active or if the connection fails, our deterministic engine generates high-impact formulaic rewrites, always transparently labeled.',
+      q: 'Which document formats are supported for the ATS diagnostic scan?',
+      a: 'STRUCT accepts PDF (.pdf), Microsoft Word (.docx), and plain text (.txt) files up to 5 MB in size. For the best parsing accuracy, we recommend uploading standard single-column PDF or DOCX documents without password protection.',
     },
     {
-      q: 'Is my resume data stored or shared?',
-      a: 'No. TALVYN operates on strict zero-persistence architecture. Resumes are processed in volatile memory only for the duration of the analysis request and immediately discarded. We do not store resumes, retain extracted text in databases, or harvest personal contact information.',
+      q: 'Is candidate and exam data stored or shared with third parties?',
+      a: 'No. STRUCT operates on strict zero-persistence architecture for resume evaluations. Resumes are processed in volatile memory only for the duration of the analysis request and immediately discarded. Proctored exam submissions are securely encrypted and accessible only to verified organization administrators.',
     },
     {
-      q: 'Can I export or save my diagnostic report?',
-      a: 'Yes. Simply click the "Print / Save PDF Report" button on your results dashboard. Our dedicated print stylesheet formats the report cleanly for saving as a multi-page PDF or physical printing.',
+      q: 'What are the pricing options for candidates and recruiters?',
+      a: 'Candidates can start with a 100% free ATS diagnostic scan, buy an instant ₹49 Executive AI Polish pack, or subscribe to Pro at ₹249/mo (or Elite at ₹499/mo) for proctored mock assessments and candidate certifications. Engineering organizations can choose from flexible hiring tiers starting with a free recruiter pilot up to Enterprise volume screening.',
     },
   ];
 
@@ -60,7 +64,7 @@ export function FaqSection() {
             Frequently Asked Questions
           </h2>
           <p style={{ color: 'var(--brand-text-muted)', fontSize: '1.05rem' }}>
-            Everything you need to know about TALVYN scoring, ATS testing, and data privacy.
+            Everything you need to know about STRUCT proctored assessments, AI mock interviews, and data privacy.
           </p>
         </div>
 

@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function AdminConsolePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'overview' | 'exams' | 'questions' | 'candidates' | 'security'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'exams' | 'questions' | 'candidates' | 'security' | 'organization'>('overview');
   const [adminUser, setAdminUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +40,34 @@ export default function AdminConsolePage() {
     enableAntiGoogle: true,
     randomQuestionCount: 0,
     mandatoryQuestionIds: [] as string[],
+    authMode: 'exam_only' as 'exam_only' | 'clerk',
+    accessScope: 'single' as 'single' | 'multiple',
+    maxAttempts: 1,
+  });
+
+  // Tab 6: Organization Profile & Team Members
+  const [hasOrg, setHasOrg] = useState<boolean | null>(null);
+  const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
+  const [userOrganizations, setUserOrganizations] = useState<any[]>([]);
+  const [orgProfile, setOrgProfile] = useState<any>(null);
+  const [orgMembers, setOrgMembers] = useState<any[]>([]);
+  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState<'admin' | 'member'>('member');
+  const [batchCandCount, setBatchCandCount] = useState(10);
+  const [batchCandDept, setBatchCandDept] = useState('Engineering');
+  const [batchCandScope, setBatchCandScope] = useState<'single' | 'multiple'>('single');
+  const [generatedBatch, setGeneratedBatch] = useState<any[]>([]);
+
+  // Organization Onboarding & Creation Modal
+  const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
+  const [orgCreating, setOrgCreating] = useState(false);
+  const [orgFormError, setOrgFormError] = useState<string | null>(null);
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [orgForm, setOrgForm] = useState({
+    name: '',
+    slug: '',
+    domain: '',
+    logoUrl: '',
   });
 
   // Assign Students Modal Data
@@ -96,6 +124,103 @@ export default function AdminConsolePage() {
 
 
 
+  const loadOrgData = async (targetOrgId?: string) => {
+    try {
+      const orgQuery = targetOrgId ? `?orgId=${encodeURIComponent(targetOrgId)}` : (activeOrgId ? `?orgId=${encodeURIComponent(activeOrgId)}` : '');
+      const [pRes, mRes] = await Promise.all([
+        fetch(`/api/org/profile${orgQuery}`),
+        fetch(`/api/org/members${orgQuery}`),
+      ]);
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        setHasOrg(Boolean(pData.hasOrg));
+        setOrgProfile(pData.organization || null);
+        setUserOrganizations(pData.userOrganizations || []);
+        if (pData.activeOrgId) {
+          setActiveOrgId(pData.activeOrgId);
+        }
+      }
+      if (mRes.ok) {
+        const mData = await mRes.json();
+        setOrgMembers(mData.members || []);
+      }
+    } catch {}
+  };
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleOrgNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setOrgForm(prev => ({
+      ...prev,
+      name: val,
+      slug: slugTouched ? prev.slug : generateSlug(val),
+    }));
+  };
+
+  const handleOrgSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlugTouched(true);
+    setOrgForm(prev => ({
+      ...prev,
+      slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+    }));
+  };
+
+  const handleCreateOrganization = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOrgFormError(null);
+
+    const name = orgForm.name.trim();
+    if (!name || name.length < 2) {
+      setOrgFormError('Organization name must be at least 2 characters long.');
+      return;
+    }
+
+    setOrgCreating(true);
+    try {
+      const res = await fetch('/api/org/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          slug: orgForm.slug.trim() || undefined,
+          domain: orgForm.domain.trim() || undefined,
+          logoUrl: orgForm.logoUrl.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create organization');
+      }
+
+      const created = data.organization;
+      setSuccessMsg(`Organization "${created.name}" created successfully!`);
+      setShowCreateOrgModal(false);
+      setOrgForm({ name: '', slug: '', domain: '', logoUrl: '' });
+      setSlugTouched(false);
+      setActiveOrgId(created.id);
+      await loadOrgData(created.id);
+      setActiveTab('organization');
+    } catch (err: any) {
+      setOrgFormError(err.message);
+    } finally {
+      setOrgCreating(false);
+    }
+  };
+
+  const handleSwitchOrg = async (orgId: string) => {
+    setActiveOrgId(orgId);
+    await loadOrgData(orgId);
+    setSuccessMsg('Switched organization workspace.');
+  };
+
   const loadAllData = async () => {
     setLoading(true);
     await Promise.all([
@@ -104,6 +229,7 @@ export default function AdminConsolePage() {
       loadQuestions(),
       loadCandidates(),
       loadSecurityEvents(),
+      loadOrgData(),
     ]);
     setLoading(false);
   };
@@ -163,12 +289,57 @@ export default function AdminConsolePage() {
     } catch {}
   };
 
+  const handleGenerateCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/org/candidates/generate-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          count: batchCandCount,
+          department: batchCandDept,
+          accessScope: batchCandScope,
+          examId: exams[0]?.id || '',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate credentials');
+      setGeneratedBatch(data.candidates || []);
+      setSuccessMsg(`Successfully generated ${data.count} Mode B candidate credentials!`);
+      loadCandidates();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleInviteMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/org/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newMemberEmail,
+          role: newMemberRole,
+          orgId: activeOrgId || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add member');
+      setSuccessMsg(`Added team member ${newMemberEmail} (${newMemberRole})`);
+      setNewMemberEmail('');
+      loadOrgData(activeOrgId || undefined);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   // 1. Authenticate Admin
   useEffect(() => {
     fetch('/api/assess/auth/me')
       .then(res => res.json())
       .then(data => {
-        if (!data.authenticated || data.user.role !== 'admin') {
+        if (!data.authenticated || (data.user.role !== 'admin' && data.user.role !== 'super_admin')) {
           router.push('/assess');
         } else {
           setAdminUser(data.user);
@@ -459,7 +630,65 @@ export default function AdminConsolePage() {
             </Link>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {hasOrg && userOrganizations.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.74rem', color: '#94A3B8', fontWeight: 700, letterSpacing: '0.05em' }}>WORKSPACE:</span>
+                <select
+                  value={activeOrgId || ''}
+                  onChange={(e) => {
+                    if (e.target.value === '__CREATE_NEW__') {
+                      setOrgFormError(null);
+                      setShowCreateOrgModal(true);
+                    } else {
+                      handleSwitchOrg(e.target.value);
+                    }
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {userOrganizations.map((o) => (
+                    <option key={o.id} value={o.id} style={{ background: '#0A1B38', color: '#FFF' }}>
+                      🏢 {o.name} ({o.role})
+                    </option>
+                  ))}
+                  <option value="__CREATE_NEW__" style={{ background: '#0284C7', color: '#FFF', fontWeight: 700 }}>
+                    + Create New Organization...
+                  </option>
+                </select>
+              </div>
+            )}
+
+            {hasOrg === false && (
+              <button
+                onClick={() => {
+                  setOrgFormError(null);
+                  setShowCreateOrgModal(true);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #0284C7 0%, #38BDF8 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)'
+                }}
+              >
+                + Set Up Organization
+              </button>
+            )}
+
             {adminUser && (
               <span style={{ fontSize: '0.85rem', color: '#CBD5E1' }}>
                 Signed in as <strong>{adminUser.name}</strong> ({adminUser.email})
@@ -493,6 +722,7 @@ export default function AdminConsolePage() {
             { id: 'questions', label: 'Question Bank' },
             { id: 'candidates', label: 'Candidates Roster' },
             { id: 'security', label: 'Proctoring Telemetry' },
+            { id: 'organization', label: 'Organization & Team' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -556,6 +786,57 @@ export default function AdminConsolePage() {
         {/* TAB 1: OVERVIEW & ANALYTICS */}
         {activeTab === 'overview' && (
           <div>
+            {hasOrg === false && (
+              <div style={{
+                background: 'linear-gradient(135deg, #0A1B38 0%, #1E3A8A 100%)',
+                borderRadius: '16px',
+                padding: '22px 26px',
+                marginBottom: '28px',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '18px',
+                boxShadow: '0 8px 24px rgba(10, 27, 56, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <div style={{ maxWidth: '720px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(56, 189, 248, 0.2)', color: '#38BDF8', padding: '3px 10px', borderRadius: '20px', fontSize: '0.74rem', fontWeight: 700, marginBottom: '8px' }}>
+                    <span>✨</span> STRUCT ENTERPRISE SETUP
+                  </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 4px', color: '#FFFFFF' }}>
+                    Set up your organization workspace
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: '#CBD5E1', margin: 0, lineHeight: 1.5 }}>
+                    Create an organization to activate multi-tenant isolation, invite team admins, configure custom institutional domains, and provision candidate rosters.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    onClick={() => {
+                      setOrgFormError(null);
+                      setShowCreateOrgModal(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #0284C7 0%, #38BDF8 100%)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '11px 20px',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    + Set Up Organization Now
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* KPI Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px', marginBottom: '32px' }}>
               <div style={{ background: '#FFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
@@ -1163,6 +1444,373 @@ export default function AdminConsolePage() {
           </div>
         )}
 
+        {/* TAB 6: ORGANIZATION & TEAM */}
+        {activeTab === 'organization' && (
+          <div>
+            {!hasOrg ? (
+              /* ONBOARDING WELCOME SCREEN */
+              <div style={{ maxWidth: '880px', margin: '20px auto 40px' }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
+                  borderRadius: '24px',
+                  border: '1px solid #E2E8F0',
+                  padding: '48px 40px',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #0284C7 0%, #38BDF8 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '1.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 20px',
+                    boxShadow: '0 8px 20px rgba(2, 132, 199, 0.3)'
+                  }}>
+                    🏢
+                  </div>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0A1B38', margin: '0 0 10px' }}>
+                    Set Up Your Organization Workspace
+                  </h2>
+                  <p style={{ fontSize: '0.98rem', color: '#64748B', maxWidth: '620px', margin: '0 auto 32px', lineHeight: 1.6 }}>
+                    You haven&apos;t joined or created an organization workspace yet. Establish your institutional workspace to unlock enterprise assessment controls, configure multi-tenant isolation, invite team admins, and manage candidate rosters.
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      setOrgFormError(null);
+                      setShowCreateOrgModal(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '14px 32px',
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 6px 20px rgba(2, 132, 199, 0.35)',
+                      transition: 'transform 0.15s ease'
+                    }}
+                  >
+                    + Create Organization Workspace
+                  </button>
+
+                  {/* Feature Highlights Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                    gap: '20px',
+                    marginTop: '48px',
+                    textAlign: 'left'
+                  }}>
+                    <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '1.4rem', marginBottom: '10px' }}>🛡️</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0A1B38', marginBottom: '6px' }}>
+                        Multi-Tenant Isolation
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5 }}>
+                        All candidate telemetry, question banks, and examinations are cryptographically walled under your tenant boundary.
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '1.4rem', marginBottom: '10px' }}>👥</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0A1B38', marginBottom: '6px' }}>
+                        Team RBAC Governance
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5 }}>
+                        Invite co-examiners and department administrators with granular role permissions and team seat controls.
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '1.4rem', marginBottom: '10px' }}>🌐</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0A1B38', marginBottom: '6px' }}>
+                        Branded Portal &amp; Domain
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5 }}>
+                        Map institutional custom domains and display white-labeled logos across exams and verified scorecards.
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '1.4rem', marginBottom: '10px' }}>⚡</div>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0A1B38', marginBottom: '6px' }}>
+                        Candidate Roster Batching
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5 }}>
+                        Instantly provision Mode B exam credentials with mandatory first-login password rotation.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ACTIVE ORGANIZATION DASHBOARD */
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '14px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0A1B38', margin: 0 }}>
+                      Organization Profile &amp; Governance
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0' }}>
+                      Manage enterprise workspace settings, administrative team seats, and candidate credential batches.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {userOrganizations.length > 1 && (
+                      <select
+                        value={activeOrgId || ''}
+                        onChange={(e) => {
+                          if (e.target.value === '__CREATE_NEW__') {
+                            setOrgFormError(null);
+                            setShowCreateOrgModal(true);
+                          } else {
+                            handleSwitchOrg(e.target.value);
+                          }
+                        }}
+                        style={{
+                          background: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          color: '#0F172A',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {userOrganizations.map((o) => (
+                          <option key={o.id} value={o.id}>
+                            🏢 {o.name} ({o.role})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <button
+                      onClick={() => {
+                        setOrgFormError(null);
+                        setShowCreateOrgModal(true);
+                      }}
+                      style={{
+                        background: '#0284C7',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 14px',
+                        fontSize: '0.86rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      + New Organization
+                    </button>
+                    <button
+                      onClick={() => loadOrgData(activeOrgId || undefined)}
+                      style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 14px', fontSize: '0.86rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+
+                {/* Org Profile Header Card */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px', marginBottom: '28px' }}>
+                  <div style={{ background: '#FFF', borderRadius: '14px', border: '1px solid #E2E8F0', padding: '20px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+                    {orgProfile?.logo_url ? (
+                      <img
+                        src={orgProfile.logo_url}
+                        alt="Org Logo"
+                        style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'contain', background: '#F8FAFC', border: '1px solid #E2E8F0' }}
+                        onError={(e) => { (e.target as any).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#E0F2FE', color: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800 }}>
+                        {(orgProfile?.name || 'O').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Workspace Name</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0A1B38', marginTop: '4px' }}>
+                        {orgProfile?.name || 'Enterprise Workspace'}
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#0284C7', marginTop: '2px' }}>
+                        Slug: <code>{orgProfile?.slug || 'default'}</code>
+                        {orgProfile?.domain && <span style={{ color: '#64748B', marginLeft: '8px' }}>• {orgProfile.domain}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#FFF', borderRadius: '14px', border: '1px solid #E2E8F0', padding: '20px' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Subscription Tier</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#16A34A', marginTop: '6px' }}>
+                      {(orgProfile?.plan_tier || 'recruit_pro').toUpperCase().replace('_', ' ')}
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: '#64748B', marginTop: '4px' }}>
+                      Multi-tenant assessment isolation active
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#FFF', borderRadius: '14px', border: '1px solid #E2E8F0', padding: '20px' }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Team Members</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0A1B38', marginTop: '6px' }}>
+                      {orgMembers.length} Active Admins
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: '#64748B', marginTop: '4px' }}>
+                      Role-based access control enabled
+                    </div>
+                  </div>
+                </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              {/* Member Management */}
+              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '24px' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0A1B38', marginBottom: '16px' }}>
+                  Administrative Team Seats
+                </h3>
+                <form onSubmit={handleInviteMember} style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
+                  <input
+                    type="email" required placeholder="colleague@institution.com"
+                    value={newMemberEmail} onChange={e => setNewMemberEmail(e.target.value)}
+                    style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.86rem' }}
+                  />
+                  <select
+                    value={newMemberRole} onChange={e => setNewMemberRole(e.target.value as any)}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.86rem' }}
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="member">Member</option>
+                  </select>
+                  <button type="submit" style={{ padding: '8px 16px', background: '#0A1B38', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.86rem', cursor: 'pointer' }}>
+                    + Add
+                  </button>
+                </form>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.86rem' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', textAlign: 'left', color: '#64748B' }}>
+                        <th style={{ padding: '8px 12px' }}>User</th>
+                        <th style={{ padding: '8px 12px' }}>Role</th>
+                        <th style={{ padding: '8px 12px' }}>Added</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orgMembers.map(m => (
+                        <tr key={m.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ fontWeight: 600, color: '#0F172A' }}>{m.user_name || m.user_email}</div>
+                            <div style={{ fontSize: '0.74rem', color: '#64748B' }}>{m.user_email}</div>
+                          </td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700, background: m.role === 'owner' ? '#FEF3C7' : '#E0F2FE', color: m.role === 'owner' ? '#B45309' : '#0369A1' }}>
+                              {m.role.toUpperCase()}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 12px', fontSize: '0.78rem', color: '#64748B' }}>
+                            {new Date(m.created_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mode B Candidate Credential Generator */}
+              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '24px' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0A1B38', marginBottom: '8px' }}>
+                  ⚡ Mode B Candidate Credential Generator
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: '#64748B', marginBottom: '16px' }}>
+                  Generate secure, temporary login credentials with mandatory first-login password rotation. Exam-only credentials are isolated from general platform products.
+                </p>
+
+                <form onSubmit={handleGenerateCredentials} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Batch Size (Count)</label>
+                      <input
+                        type="number" min="1" max="100" value={batchCandCount}
+                        onChange={e => setBatchCandCount(parseInt(e.target.value, 10) || 1)}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.86rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Department</label>
+                      <input
+                        type="text" value={batchCandDept}
+                        onChange={e => setBatchCandDept(e.target.value)}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.86rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Access Scope</label>
+                    <select
+                      value={batchCandScope} onChange={e => setBatchCandScope(e.target.value as any)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.86rem' }}
+                    >
+                      <option value="single">Single Assessment (Locked strictly to assigned exam)</option>
+                      <option value="multiple">Multiple Assigned Assessments</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    style={{ padding: '10px 18px', background: '#0284C7', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', marginTop: '6px' }}
+                  >
+                    Generate {batchCandCount} Exam-Only Credentials
+                  </button>
+                </form>
+
+                {generatedBatch.length > 0 && (
+                  <div style={{ marginTop: '18px', background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', padding: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#166534' }}>
+                        ✓ Generated {generatedBatch.length} Credentials
+                      </span>
+                      <button
+                        onClick={() => {
+                          const csv = 'Email,TemporaryPassword,Department,Scope\n' + generatedBatch.map(c => `"${c.email}","${c.tempPassword}","${c.department}","${c.accessScope}"`).join('\n');
+                          const blob = new Blob([csv], { type: 'text/csv' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `credentials_batch_${Date.now()}.csv`;
+                          a.click();
+                        }}
+                        style={{ background: '#0A1B38', color: '#FFF', border: 'none', borderRadius: '4px', padding: '4px 10px', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Download CSV
+                      </button>
+                    </div>
+                    <div style={{ maxHeight: '140px', overflowY: 'auto', fontSize: '0.78rem', fontFamily: 'monospace' }}>
+                      {generatedBatch.slice(0, 5).map((c, i) => (
+                        <div key={i} style={{ padding: '3px 0', borderBottom: '1px solid #E2E8F0' }}>
+                          <strong>{c.email}</strong> — Password: <code>{c.tempPassword}</code>
+                        </div>
+                      ))}
+                      {generatedBatch.length > 5 && (
+                        <div style={{ color: '#64748B', paddingTop: '4px' }}>...and {generatedBatch.length - 5} more in downloaded CSV</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+
         {/* MODAL: CREATE EXAM */}
         {showCreateExamModal && (
           <div style={{
@@ -1211,6 +1859,40 @@ export default function AdminConsolePage() {
                     <input
                       type="number" step="0.5" value={examForm.passMarks} onChange={e => setExamForm({ ...examForm, passMarks: parseFloat(e.target.value) })}
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Candidate Auth Mode</label>
+                    <select
+                      value={examForm.authMode}
+                      onChange={e => setExamForm({ ...examForm, authMode: e.target.value as any })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.84rem' }}
+                    >
+                      <option value="exam_only">Mode B: Exam-Only Token</option>
+                      <option value="clerk">Mode A: Clerk Authentication</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Access Scope</label>
+                    <select
+                      value={examForm.accessScope}
+                      onChange={e => setExamForm({ ...examForm, accessScope: e.target.value as any })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.84rem' }}
+                    >
+                      <option value="single">Single Assessment Only</option>
+                      <option value="multiple">Multiple Assessments</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Max Attempts</label>
+                    <input
+                      type="number" min="1" max="10"
+                      value={examForm.maxAttempts}
+                      onChange={e => setExamForm({ ...examForm, maxAttempts: parseInt(e.target.value, 10) || 1 })}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.84rem' }}
                     />
                   </div>
                 </div>
@@ -1723,6 +2405,262 @@ export default function AdminConsolePage() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+        {/* MODAL: CREATE / ONBOARD ORGANIZATION */}
+        {showCreateOrgModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(10, 27, 56, 0.65)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '20px'
+          }}>
+            <div style={{
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              maxWidth: '560px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              overflow: 'hidden',
+              border: '1px solid #E2E8F0'
+            }}>
+              {/* Modal Header */}
+              <div style={{
+                background: 'linear-gradient(135deg, #0A1B38 0%, #1E293B 100%)',
+                padding: '24px 28px',
+                color: '#FFFFFF',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    STRUCT Enterprise Onboarding
+                  </div>
+                  <h2 style={{ margin: '4px 0 0', fontSize: '1.35rem', fontWeight: 800 }}>
+                    Create Organization Workspace
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!orgCreating) {
+                      setShowCreateOrgModal(false);
+                      setOrgFormError(null);
+                    }
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    cursor: orgCreating ? 'not-allowed' : 'pointer',
+                    fontSize: '1.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Modal Form */}
+              <form onSubmit={handleCreateOrganization} style={{ padding: '28px' }}>
+                {orgFormError && (
+                  <div style={{
+                    background: '#FEF2F2',
+                    border: '1px solid #FCA5A5',
+                    color: '#991B1B',
+                    borderRadius: '8px',
+                    padding: '12px 14px',
+                    fontSize: '0.85rem',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>⚠️</span>
+                    <span>{orgFormError}</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>
+                      Organization Name <span style={{ color: '#EF4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Acme Corporation or Stanford University"
+                      value={orgForm.name}
+                      onChange={handleOrgNameChange}
+                      disabled={orgCreating}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.9rem',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>
+                      Workspace URL Slug <span style={{ color: '#EF4444' }}>*</span>
+                    </label>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      background: '#F8FAFC'
+                    }}>
+                      <span style={{ padding: '10px 12px', fontSize: '0.85rem', color: '#64748B', background: '#F1F5F9', borderRight: '1px solid #CBD5E1', whiteSpace: 'nowrap' }}>
+                        struct.careers/org/
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        placeholder="acme-corp"
+                        value={orgForm.slug}
+                        onChange={handleOrgSlugChange}
+                        disabled={orgCreating}
+                        style={{
+                          flex: 1,
+                          padding: '10px 12px',
+                          border: 'none',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          background: '#FFFFFF'
+                        }}
+                      />
+                    </div>
+                    <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '4px' }}>
+                      Unique alphanumeric slug. Used for candidate portal access and multi-tenant isolation.
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>
+                      Institutional Domain <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#64748B' }}>(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. acme.edu or assessment.acme.com"
+                      value={orgForm.domain}
+                      onChange={e => setOrgForm({ ...orgForm, domain: e.target.value })}
+                      disabled={orgCreating}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.9rem',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '4px' }}>
+                      Whitelisted institutional email domain or custom URL mapping.
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>
+                      Logo URL <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#64748B' }}>(Optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://acme.com/assets/logo.png"
+                      value={orgForm.logoUrl}
+                      onChange={e => setOrgForm({ ...orgForm, logoUrl: e.target.value })}
+                      disabled={orgCreating}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.9rem',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '4px' }}>
+                      Public image URL to display on candidate test views and custom reports.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '28px', paddingTop: '16px', borderTop: '1px solid #E2E8F0' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!orgCreating) {
+                        setShowCreateOrgModal(false);
+                        setOrgFormError(null);
+                      }
+                    }}
+                    disabled={orgCreating}
+                    style={{
+                      padding: '10px 18px',
+                      background: '#F1F5F9',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '8px',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      color: '#475569',
+                      cursor: orgCreating ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={orgCreating}
+                    style={{
+                      padding: '10px 22px',
+                      background: orgCreating ? '#94A3B8' : '#0284C7',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                      cursor: orgCreating ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+                    }}
+                  >
+                    {orgCreating ? (
+                      <>
+                        <span>⏳</span>
+                        <span>Creating Workspace...</span>
+                      </>
+                    ) : (
+                      'Create Organization Workspace'
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

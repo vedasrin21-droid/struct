@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 interface NavbarProps {
   onCheckResumeClick: () => void;
@@ -17,24 +18,25 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        background: 'rgba(245, 243, 238, 0.92)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--brand-border)',
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
         transition: 'all 0.2s ease',
       }}
     >
       <div
-        className="container"
         style={{
+          width: '100%',
+          padding: '0 28px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: '76px',
+          height: '66px',
         }}
       >
-        {/* Brand Logo */}
-        <a
-          href="#"
+        {/* Left Corner: Brand Logo, Name & Tagline */}
+        <Link
+          href="/"
           onClick={(e) => {
             if (onHomeClick) {
               e.preventDefault();
@@ -44,25 +46,25 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '10px',
             textDecoration: 'none',
           }}
         >
-          {/* Custom Geometric Clay Icon */}
           <div
             style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #12336B 0%, #0A1B38 100%)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '9px',
+              background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 6px 14px rgba(10, 27, 56, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
               color: '#FFFFFF',
               fontWeight: 800,
-              fontSize: '1.25rem',
+              fontSize: '1.15rem',
               letterSpacing: '-0.5px',
+              boxShadow: '0 4px 10px rgba(10, 27, 56, 0.15)',
+              flexShrink: 0,
             }}
           >
             S
@@ -70,11 +72,11 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span
               style={{
-                fontFamily: "'Space Grotesk', 'Plus Jakarta Sans', sans-serif",
-                fontSize: '1.35rem',
-                fontWeight: 700,
+                fontFamily: "'Space Grotesk', -apple-system, sans-serif",
+                fontSize: '1.25rem',
+                fontWeight: 800,
                 letterSpacing: '-0.5px',
-                color: 'var(--brand-dark)',
+                color: '#0A1B38',
                 lineHeight: 1.1,
               }}
             >
@@ -82,127 +84,122 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
             </span>
             <span
               style={{
-                fontSize: '0.68rem',
-                fontWeight: 600,
+                fontSize: '0.62rem',
+                fontWeight: 700,
                 letterSpacing: '0.8px',
                 textTransform: 'uppercase',
-                color: 'var(--brand-text-muted)',
+                color: '#0284C7',
               }}
             >
-              Resume Checker &amp; Builder
+              Assessments &amp; Hiring Platform
             </span>
           </div>
-        </a>
+        </Link>
 
-        {/* Desktop Navigation */}
+        {/* Center Navigation */}
         <nav
           style={{
             display: 'none',
             alignItems: 'center',
-            gap: '28px',
+            gap: '26px',
           }}
           className="desktop-nav"
         >
-          <a
-            href="#features"
-            style={{
-              color: 'var(--brand-text)',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              transition: 'color 0.2s ease',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--brand-primary)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--brand-text)')}
-          >
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            style={{
-              color: 'var(--brand-text)',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              transition: 'color 0.2s ease',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--brand-primary)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--brand-text)')}
-          >
-            How It Works
-          </a>
-          {onOpenBuilderClick && (
-            <button
-              onClick={onOpenBuilderClick}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--brand-primary)',
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
-              }}
-            >
-              <span>Resume Builder</span>
-              <span className="pill" style={{ background: 'var(--brand-soft-blue)', color: 'var(--brand-primary)', fontSize: '0.68rem', padding: '1px 6px' }}>New</span>
-            </button>
-          )}
-          <a
+          <Link
             href="/assess"
             style={{
-              color: 'var(--brand-text)',
+              color: '#334155',
               textDecoration: 'none',
               fontWeight: 600,
-              fontSize: '0.95rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'color 0.2s ease',
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
             }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--brand-primary)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--brand-text)')}
           >
-            <span>Exam Portal</span>
-            <span className="pill" style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.65rem', padding: '1px 6px', fontWeight: 700 }}>Assess</span>
-          </a>
+            Practice Assessments
+          </Link>
+
           <a
-            href="#faq"
+            href="#pricing"
             style={{
-              color: 'var(--brand-text)',
+              color: '#334155',
               textDecoration: 'none',
               fontWeight: 600,
-              fontSize: '0.95rem',
-              transition: 'color 0.2s ease',
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
             }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--brand-primary)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--brand-text)')}
           >
-            FAQ
+            Pro Plans &amp; Pricing
+          </a>
+
+          <a
+            href="#resume-checker"
+            onClick={(e) => {
+              e.preventDefault();
+              onCheckResumeClick();
+            }}
+            style={{
+              color: '#64748B',
+              textDecoration: 'none',
+              fontWeight: 500,
+              fontSize: '0.88rem',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            Resume Diagnostic
           </a>
         </nav>
 
-        {/* Right CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {onOpenBuilderClick && (
-            <button
-              onClick={onOpenBuilderClick}
-              className="btn btn-secondary"
-              style={{ display: 'inline-flex' }}
-            >
-              <span>Build Resume</span>
-            </button>
-          )}
-          <button
-            onClick={onCheckResumeClick}
-            className="btn btn-primary"
-            style={{ display: 'inline-flex' }}
+        {/* Right Corner: Recruiter Link & Primary Assessments CTA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Link
+            href="/assess/admin"
+            style={{
+              color: '#475569',
+              textDecoration: 'none',
+              fontSize: '0.86rem',
+              fontWeight: 600,
+              padding: '6px 12px',
+              borderRadius: '6px',
+              transition: 'background 0.15s ease',
+            }}
+            className="hidden-mobile"
           >
-            <span>Check My Resume</span>
-          </button>
+            Recruiter Login
+          </Link>
+
+          <Link
+            href="/assess"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+              color: '#FFFFFF',
+              padding: '9px 20px',
+              borderRadius: '8px',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              textDecoration: 'none',
+              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
+              letterSpacing: '-0.2px',
+            }}
+          >
+            <span>Assessments</span>
+            <span
+              style={{
+                background: 'rgba(255, 255, 255, 0.22)',
+                color: '#FFFFFF',
+                fontSize: '0.62rem',
+                fontWeight: 800,
+                padding: '1px 5px',
+                borderRadius: '4px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Live
+            </span>
+            <span>&rarr;</span>
+          </Link>
 
           {/* Mobile Hamburger Button */}
           <button
@@ -211,16 +208,15 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
             aria-label="Toggle menu"
             style={{
               display: 'none',
-              background: 'var(--brand-card)',
-              border: '1px solid var(--brand-border)',
-              borderRadius: '10px',
-              padding: '8px',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              padding: '6px',
               cursor: 'pointer',
-              color: 'var(--brand-text)',
-              boxShadow: 'var(--clay-button-secondary)',
+              color: '#0A1B38',
             }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {mobileMenuOpen ? (
                 <>
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -242,66 +238,73 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
       {mobileMenuOpen && (
         <div
           style={{
-            background: 'var(--brand-card)',
-            borderBottom: '1px solid var(--brand-border)',
-            padding: '20px 24px',
+            background: '#FFFFFF',
+            borderBottom: '1px solid #E2E8F0',
+            padding: '16px 20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
-            boxShadow: 'var(--clay-card)',
+            gap: '12px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.06)',
           }}
         >
-          <a
-            href="#features"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: 'var(--brand-text)', textDecoration: 'none', fontWeight: 600, padding: '8px 0' }}
-          >
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: 'var(--brand-text)', textDecoration: 'none', fontWeight: 600, padding: '8px 0' }}
-          >
-            How It Works
-          </a>
-          <a
+          <Link
             href="/assess"
             onClick={() => setMobileMenuOpen(false)}
-            style={{ color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: 700, padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            style={{
+              color: '#0284C7',
+              textDecoration: 'none',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 0',
+            }}
           >
-            <span>STRUCT Assess (Exam Portal)</span>
-            <span className="pill" style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.65rem', padding: '1px 6px' }}>New</span>
+            <span>Online Assessments (Live Portal)</span>
+            <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px' }}>Launch</span>
+          </Link>
+          <Link
+            href="/assess"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
+          >
+            Practice Assessments
+          </Link>
+          <a
+            href="#pricing"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
+          >
+            Pro Features &amp; Pricing (INR)
           </a>
           <a
-            href="#faq"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: 'var(--brand-text)', textDecoration: 'none', fontWeight: 600, padding: '8px 0' }}
-          >
-            FAQ
-          </a>
-          {onOpenBuilderClick && (
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenBuilderClick();
-              }}
-              className="btn btn-secondary"
-              style={{ width: '100%', marginTop: '4px' }}
-            >
-              Resume Builder (New)
-            </button>
-          )}
-          <button
+            href="#resume-checker"
             onClick={() => {
               setMobileMenuOpen(false);
               onCheckResumeClick();
             }}
-            className="btn btn-primary"
-            style={{ width: '100%', marginTop: '4px' }}
+            style={{ color: '#64748B', textDecoration: 'none', fontWeight: 500, fontSize: '0.9rem', padding: '6px 0' }}
           >
-            Check My Resume
-          </button>
+            Resume Diagnostic (Free Entry Tool)
+          </a>
+          <Link
+            href="/assess"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              marginTop: '8px',
+              background: '#0A1B38',
+              color: '#FFFFFF',
+              textAlign: 'center',
+              padding: '10px 16px',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              textDecoration: 'none',
+            }}
+          >
+            Candidate &amp; Recruiter Portal &rarr;
+          </Link>
         </div>
       )}
 
@@ -313,6 +316,9 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           .mobile-toggle {
             display: none !important;
           }
+          .hidden-mobile {
+            display: inline-block !important;
+          }
         }
         @media (max-width: 767px) {
           .desktop-nav {
@@ -320,6 +326,9 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           }
           .mobile-toggle {
             display: flex !important;
+          }
+          .hidden-mobile {
+            display: none !important;
           }
         }
       `}</style>

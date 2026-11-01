@@ -50,10 +50,10 @@ export function HowItWorks() {
               marginBottom: '12px',
             }}
           >
-            How TALVYN Optimizes Your Application
+            How STRUCT Optimizes Your Technical Profile
           </h2>
           <p style={{ color: 'var(--brand-text-muted)', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto' }}>
-            From raw document to recruiter-ready diagnostic report in under 10 seconds.
+            From raw application to verified technical competency benchmark.
           </p>
         </div>
 

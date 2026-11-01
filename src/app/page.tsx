@@ -8,6 +8,7 @@ import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { ResumeBuilder } from '@/components/ResumeBuilder';
 import { HowItWorks } from '@/components/HowItWorks';
 import { Features } from '@/components/Features';
+import { PricingSection } from '@/components/PricingSection';
 import { FaqSection } from '@/components/FaqSection';
 import { Footer } from '@/components/Footer';
 import { PrivacyModal, TermsModal, ContactModal } from '@/components/Modals';
@@ -42,7 +43,6 @@ export default function Home() {
 
   const handleAnalysisComplete = (result: AnalysisResult) => {
     setAnalysisResult(result);
-    // Smooth scroll down to results section after a tiny tick
     setTimeout(() => {
       const el = document.getElementById('results-section');
       if (el) {
@@ -58,7 +58,7 @@ export default function Home() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
-      {/* 1. Navbar */}
+      {/* 1. Sleek Minimalist Navbar */}
       <Navbar
         onCheckResumeClick={scrollToChecker}
         onOpenBuilderClick={() => setCurrentView('builder')}
@@ -79,17 +79,23 @@ export default function Home() {
           />
         ) : (
           <>
-            {/* 2. Hero Section */}
+            {/* 2. Hero Section (Spotlighting Assessments & AI Interviews) */}
             <Hero
               onCheckResumeClick={scrollToChecker}
               onSeeHowItWorksClick={scrollToHowItWorks}
               onOpenBuilderClick={() => setCurrentView('builder')}
             />
 
-            {/* 3. Resume Checker Upload Section */}
+            {/* 3. Core Architectural Features */}
+            <Features />
+
+            {/* 4. Transparent Pro Pricing & Plans */}
+            <PricingSection />
+
+            {/* 5. Resume Diagnostic & Upload Section (Complimentary Entry Utility) */}
             <ResumeChecker onAnalysisComplete={handleAnalysisComplete} />
 
-            {/* 4. Real Results Dashboard (Displayed when analysis finishes) */}
+            {/* 6. Real Results Dashboard (Displayed when analysis finishes) */}
             {analysisResult && (
               <ResultsDashboard
                 result={analysisResult}
@@ -98,13 +104,10 @@ export default function Home() {
               />
             )}
 
-            {/* 5. How It Works */}
+            {/* 7. How It Works */}
             <HowItWorks />
 
-            {/* 6. Features */}
-            <Features />
-
-            {/* 7. FAQ */}
+            {/* 8. FAQ */}
             <FaqSection />
           </>
         )}

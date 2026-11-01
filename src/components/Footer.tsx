@@ -61,38 +61,43 @@ export function Footer({ onOpenPrivacy, onOpenTerms, onOpenContact }: FooterProp
               </span>
             </div>
             <p style={{ color: '#BAC7D5', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '16px' }}>
-              Premium AI Resume Score Checker. Helping candidates unlock higher interview conversion through ATS diagnostics and quantified impact optimization.
+              Institutional-grade technical assessments, adaptive AI interview simulations, and verified hiring telemetry for high-growth tech teams.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#8993A4' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981' }} />
-              <span>Zero-persistence privacy guarantee</span>
+              <span>Multi-instance secure exam &amp; payment infrastructure</span>
             </div>
           </div>
 
-          {/* Quick Links Column */}
+          {/* Core Platform Links Column */}
           <div>
             <h4 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#DCE6F5', marginBottom: '16px' }}>
-              Product
+              Platform
             </h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
               <li>
+                <a href="/assess" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
+                  Technical Assessments
+                </a>
+              </li>
+              <li>
+                <a href="/portal" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
+                  AI Mock Interviews
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
+                  Pro Plans &amp; Pricing
+                </a>
+              </li>
+              <li>
+                <a href="/assess/admin" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
+                  Recruiter Console
+                </a>
+              </li>
+              <li>
                 <a href="#resume-checker" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
-                  Analyze Resume
-                </a>
-              </li>
-              <li>
-                <a href="#features" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
-                  Features &amp; Benchmarks
-                </a>
-              </li>
-              <li>
-                <a href="#how-it-works" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
-                  How It Works
-                </a>
-              </li>
-              <li>
-                <a href="#faq" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
-                  Frequently Asked Questions
+                  ATS Resume Diagnostic
                 </a>
               </li>
             </ul>

@@ -9,20 +9,21 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params;
     const db = getDb();
 
-    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(id) as any;
+    const exam = await db.queryOne<any>('SELECT * FROM exams WHERE id = $1', [id]);
     if (!exam) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
 
-    const questions = db.prepare(`
+    const qResult = await db.query<any>(`
       SELECT q.*, eq.order_index
       FROM exam_questions eq
       JOIN questions q ON q.id = eq.question_id
-      WHERE eq.exam_id = ?
+      WHERE eq.exam_id = $1
       ORDER BY eq.order_index ASC
-    `).all(id) as any[];
+    `, [id]);
+    const questions = qResult.rows;
 
-    const candidates = db.prepare(`
+    const candResult = await db.query<any>(`
       SELECT 
         u.id, u.name, u.email, u.department, u.college,
         ea.assigned_at, ea.status as assignment_status,
@@ -31,9 +32,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       FROM exam_assignments ea
       JOIN users u ON u.id = ea.candidate_id
       LEFT JOIN attempts att ON att.exam_id = ea.exam_id AND att.candidate_id = u.id
-      WHERE ea.exam_id = ?
+      WHERE ea.exam_id = $1
       ORDER BY u.name ASC
-    `).all(id);
+    `, [id]);
+    const candidates = candResult.rows;
 
     return NextResponse.json({
       exam: {
@@ -73,7 +75,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     } = body;
 
     const db = getDb();
-    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(id) as any;
+    const exam = await db.queryOne<any>('SELECT * FROM exams WHERE id = $1', [id]);
     if (!exam) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
@@ -97,22 +99,22 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const newRandomCount = randomQuestionCount !== undefined ? parseInt(randomQuestionCount, 10) : (exam.random_question_count || 0);
     const now = Date.now();
 
-    db.prepare(`
+    await db.execute(`
       UPDATE exams 
-      SET status = ?, title = ?, description = ?, duration_minutes = ?, pass_marks = ?, instructions = ?,
-          allow_back_navigation = ?, show_answer_key = ?, enable_fullscreen = ?, enable_ai_defense = ?, enable_anti_google = ?, random_question_count = ?,
-          updated_at = ?
-      WHERE id = ?
-    `).run(
+      SET status = $1, title = $2, description = $3, duration_minutes = $4, pass_marks = $5, instructions = $6,
+          allow_back_navigation = $7, show_answer_key = $8, enable_fullscreen = $9, enable_ai_defense = $10, enable_anti_google = $11, random_question_count = $12,
+          updated_at = $13
+      WHERE id = $14
+    `, [
       newStatus, newTitle, newDesc, newDuration, newPassMarks, newInstructions,
       newAllowBack, newShowAnsKey, newFullscreen, newAiDefense, newAntiGoogle, newRandomCount,
       now, id
-    );
+    ]);
 
-    db.prepare(`
+    await db.execute(`
       INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, created_at)
-      VALUES (?, ?, 'update_exam', 'exam', ?, ?, ?)
-    `).run('aud_' + crypto.randomUUID().slice(0, 8), admin.id, id, `Updated exam to status=${newStatus}`, now);
+      VALUES ($1, $2, 'update_exam', 'exam', $3, $4, $5)
+    `, ['aud_' + crypto.randomUUID().slice(0, 8), admin.id, id, `Updated exam to status=${newStatus}`, now]);
 
     return NextResponse.json({ success: true, status: newStatus });
   } catch (error: any) {
@@ -130,19 +132,19 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     const db = getDb();
 
     // Prevent deletion if students have already attempted the exam
-    const hasAttempts = db.prepare('SELECT id FROM attempts WHERE exam_id = ? LIMIT 1').get(id);
+    const hasAttempts = await db.queryOne('SELECT id FROM attempts WHERE exam_id = $1 LIMIT 1', [id]);
     if (hasAttempts) {
       return NextResponse.json({
         error: 'Cannot delete exam with existing candidate submissions. You can set the status to "closed" instead.'
       }, { status: 409 });
     }
 
-    db.prepare('DELETE FROM exams WHERE id = ?').run(id);
+    await db.execute('DELETE FROM exams WHERE id = $1', [id]);
 
-    db.prepare(`
+    await db.execute(`
       INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, created_at)
-      VALUES (?, ?, 'delete_exam', 'exam', ?, 'Deleted exam', ?)
-    `).run('aud_' + crypto.randomUUID().slice(0, 8), admin.id, id, Date.now());
+      VALUES ($1, $2, 'delete_exam', 'exam', $3, 'Deleted exam', $4)
+    `, ['aud_' + crypto.randomUUID().slice(0, 8), admin.id, id, Date.now()]);
 
     return NextResponse.json({ success: true, message: 'Exam deleted successfully' });
   } catch (error: any) {

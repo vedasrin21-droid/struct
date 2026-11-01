@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const candidate = await requireCandidate(request);
     const db = getDb();
 
-    const exams = db.prepare(`
+    const result = await db.query<any>(`
       SELECT 
         e.id, e.title, e.code, e.description, e.department,
         e.duration_minutes, e.total_marks, e.pass_marks,
@@ -23,26 +23,29 @@ export async function GET(request: Request) {
         att.pass_status
       FROM exam_assignments ea
       JOIN exams e ON e.id = ea.exam_id
-      LEFT JOIN attempts att ON att.exam_id = e.id AND att.candidate_id = ?
-      WHERE ea.candidate_id = ? AND e.status != 'draft'
+      LEFT JOIN attempts att ON att.exam_id = e.id AND att.candidate_id = $1
+      WHERE ea.candidate_id = $2 AND e.status != 'draft'
       ORDER BY ea.assigned_at DESC
-    `).all(candidate.id, candidate.id) as any[];
+    `, [candidate.id, candidate.id]);
 
+    const exams = result.rows;
     const now = Date.now();
     const formattedExams = exams.map(e => {
       let state: 'ready' | 'in_progress' | 'submitted' | 'expired' | 'closed' = 'ready';
       let remainingSeconds = 0;
+
+      const deadlineTime = Number(e.deadline_time);
 
       if (e.exam_status === 'closed') {
         state = 'closed';
       } else if (e.attempt_status === 'submitted') {
         state = 'submitted';
       } else if (e.attempt_status === 'in_progress') {
-        if (now > e.deadline_time) {
+        if (now > deadlineTime) {
           state = 'expired';
         } else {
           state = 'in_progress';
-          remainingSeconds = Math.max(0, Math.floor((e.deadline_time - now) / 1000));
+          remainingSeconds = Math.max(0, Math.floor((deadlineTime - now) / 1000));
         }
       }
 

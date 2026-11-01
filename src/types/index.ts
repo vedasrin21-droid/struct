@@ -98,7 +98,21 @@ export interface AnalysisResult {
     completenessFormula: string;
     disclaimer: string;
   };
+  entitlement?: {
+    hasAccess: boolean;
+    consumed: boolean;
+    remainingUsages: number;
+    email?: string;
+    notice?: string;
+    upgradeOffer?: {
+      productId: string;
+      name: string;
+      priceRupees: number;
+      amountPaise: number;
+    };
+  };
 }
+
 
 export interface AnalysisRequest {
   resumeText?: string;

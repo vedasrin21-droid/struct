@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 export interface AssessUser {
   id: string;
   email: string;
-  role: 'admin' | 'candidate';
+  role: 'admin' | 'candidate' | 'user';
   name: string;
   department: string;
   college?: string;
@@ -15,38 +15,42 @@ export interface AssessUser {
 }
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-export const COOKIE_NAME = 'talvyn_assess_token';
+export const COOKIE_NAME = 'struct_exam_token';
+export const LEGACY_COOKIE_NAME = 'talvyn_assess_token';
 
-export function createSession(userId: string): { token: string; expiresAt: number } {
+export async function createSession(userId: string): Promise<{ token: string; expiresAt: number }> {
   const db = getDb();
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = Date.now() + SESSION_TTL_MS;
   const sessionId = 'ses_' + crypto.randomUUID();
 
-  db.prepare(`
-    INSERT INTO sessions (id, token, user_id, expires_at, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(sessionId, token, userId, expiresAt, Date.now());
+  await db.execute(
+    `INSERT INTO sessions (id, token, user_id, expires_at, created_at)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [sessionId, token, userId, expiresAt, Date.now()]
+  );
 
   return { token, expiresAt };
 }
 
-export function verifySession(token: string): AssessUser | null {
+export async function verifySession(token: string): Promise<AssessUser | null> {
   if (!token) return null;
   const db = getDb();
 
-  const sessionRow = db.prepare(`
-    SELECT s.expires_at, u.id, u.email, u.role, u.name, u.department, u.college, u.status, u.created_at
-    FROM sessions s
-    JOIN users u ON s.user_id = u.id
-    WHERE s.token = ?
-  `).get(token) as (AssessUser & { expires_at: number }) | undefined;
+  const sessionRow = await db.queryOne<AssessUser & { expires_at: number | string }>(
+    `SELECT s.expires_at, u.id, u.email, u.role, u.name, u.department, u.college, u.status, u.must_change_password, u.created_at
+     FROM sessions s
+     JOIN users u ON s.user_id = u.id
+     WHERE s.token = $1`,
+    [token]
+  );
 
   if (!sessionRow) return null;
 
-  if (Date.now() > sessionRow.expires_at || sessionRow.status !== 'active') {
+  const expiresAtNum = Number(sessionRow.expires_at);
+  if (Date.now() > expiresAtNum || sessionRow.status !== 'active') {
     // Session expired or suspended
-    db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+    await db.execute('DELETE FROM sessions WHERE token = $1', [token]);
     return null;
   }
 
@@ -57,15 +61,16 @@ export function verifySession(token: string): AssessUser | null {
     name: sessionRow.name,
     department: sessionRow.department,
     college: sessionRow.college,
+    must_change_password: Number(sessionRow.must_change_password || 0),
     status: sessionRow.status,
-    created_at: sessionRow.created_at,
+    created_at: Number(sessionRow.created_at),
   };
 }
 
-export function deleteSession(token: string): void {
+export async function deleteSession(token: string): Promise<void> {
   if (!token) return;
   const db = getDb();
-  db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+  await db.execute('DELETE FROM sessions WHERE token = $1', [token]);
 }
 
 export async function getSessionUser(request?: Request): Promise<AssessUser | null> {
@@ -79,11 +84,11 @@ export async function getSessionUser(request?: Request): Promise<AssessUser | nu
     }
   }
 
-  // 2. Try cookie if header not provided
+  // 2. Try canonical cookie first, then legacy cookie fallback
   if (!token) {
     try {
       const cookieStore = await cookies();
-      const cookie = cookieStore.get(COOKIE_NAME);
+      const cookie = cookieStore.get(COOKIE_NAME) || cookieStore.get(LEGACY_COOKIE_NAME);
       if (cookie) {
         token = cookie.value;
       }
@@ -95,14 +100,14 @@ export async function getSessionUser(request?: Request): Promise<AssessUser | nu
   if (!token && request) {
     // Fallback: parse Cookie header manually if cookies() failed
     const cookieHeader = request.headers.get('cookie') || '';
-    const match = cookieHeader.match(new RegExp(`(?:^|; )${COOKIE_NAME}=([^;]*)`));
+    const match = cookieHeader.match(new RegExp(`(?:^|; )(?:${COOKIE_NAME}|${LEGACY_COOKIE_NAME})=([^;]*)`));
     if (match) {
       token = decodeURIComponent(match[1]);
     }
   }
 
   if (!token) return null;
-  return verifySession(token);
+  return await verifySession(token);
 }
 
 export async function requireAuth(request: Request): Promise<AssessUser> {
@@ -123,7 +128,7 @@ export async function requireAdmin(request: Request): Promise<AssessUser> {
 
 export async function requireCandidate(request: Request): Promise<AssessUser> {
   const user = await requireAuth(request);
-  if (user.role !== 'candidate') {
+  if (user.role !== 'candidate' && user.role !== 'user') {
     throw new Error('FORBIDDEN_CANDIDATE_REQUIRED');
   }
   return user;

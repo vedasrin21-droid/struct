@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { AnalysisResult } from '@/types';
+import { UpgradeAiModal } from '@/components/UpgradeAiModal';
 
 interface ResultsDashboardProps {
   result: AnalysisResult;
@@ -12,6 +13,7 @@ interface ResultsDashboardProps {
 export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDashboardProps) {
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [copiedBulletId, setCopiedBulletId] = useState<string | null>(null);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const handlePrint = () => {
     window.print();
@@ -121,8 +123,107 @@ export function ResultsDashboard({ result, onReset, onEditInBuilder }: ResultsDa
           </div>
         </div>
 
+        {/* AI Enhancement & Entitlement Status Banner */}
+        <div className="no-print" style={{ marginBottom: '24px' }}>
+          {!result.isAiEnhanced ? (
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #12336B 0%, #1D4ED8 100%)',
+                color: '#FFFFFF',
+                borderRadius: '20px',
+                padding: '18px 24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '16px',
+                boxShadow: '0 10px 25px -5px rgba(18, 51, 107, 0.25)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 800, fontSize: '0.98rem' }}>
+                    ⚙️ Free Deterministic Diagnostic Active
+                  </span>
+                  <span
+                    style={{
+                      background: '#FEF3C7',
+                      color: '#92400E',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                    }}
+                  >
+                    Free Tier
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.84rem', opacity: 0.92, lineHeight: 1.4 }}>
+                  Upgrade to Executive AI Polish for <strong>₹49</strong> (Includes 2 Usages). Unlock Google X-Y-Z metric bullet rewrites and tailored executive summaries.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsUpgradeModalOpen(true)}
+                className="btn btn-sm"
+                style={{
+                  background: '#FFFFFF',
+                  color: '#12336B',
+                  fontWeight: 800,
+                  borderRadius: '12px',
+                  padding: '10px 20px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                }}
+              >
+                ✨ Unlock AI Polish (₹49)
+              </button>
+            </div>
+          ) : (
+            <div
+              style={{
+                background: '#F0FDF4',
+                color: '#166534',
+                border: '1.5px solid #BBF7D0',
+                borderRadius: '18px',
+                padding: '14px 22px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '14px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.1rem' }}>✨</span>
+                <div>
+                  <strong style={{ fontSize: '0.92rem' }}>AI Enhancement Active</strong>
+                  <span style={{ marginLeft: '8px', fontSize: '0.82rem', color: '#15803D' }}>
+                    ({result.entitlement?.remainingUsages !== undefined ? `${result.entitlement.remainingUsages} AI Usages Remaining` : 'Verified'})
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsUpgradeModalOpen(true)}
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.78rem', borderRadius: '10px' }}
+              >
+                + Top Up Credits (₹49)
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Upgrade AI Modal */}
+        <UpgradeAiModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          defaultEmail={result.contactInfo?.detectedEmail || ''}
+        />
+
         {/* Executive ATS Diagnostic Verdict Banner */}
         <div
+
           className="colour-morph-card"
           style={{
             padding: '20px 24px',

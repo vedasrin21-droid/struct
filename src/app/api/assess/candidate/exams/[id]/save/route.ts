@@ -8,14 +8,19 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const candidate = await requireCandidate(request);
     const { id: examId } = await context.params;
     const body = await request.json();
-    const { questionId, selectedOptionIndex, isMarkedForReview, version } = body;
+    const rawOption = body.selectedOptionIndex !== undefined ? body.selectedOptionIndex : body.selectedOption;
+    const { questionId, isMarkedForReview, version } = body;
+    const selectedOptionIndex = rawOption;
 
     if (!questionId) {
       return NextResponse.json({ error: 'Question ID is required' }, { status: 400 });
     }
 
     const db = getDb();
-    const attempt = db.prepare('SELECT * FROM attempts WHERE exam_id = ? AND candidate_id = ?').get(examId, candidate.id) as any;
+    const attempt = await db.queryOne<any>(
+      'SELECT * FROM attempts WHERE exam_id = $1 AND candidate_id = $2',
+      [examId, candidate.id]
+    );
     if (!attempt) {
       return NextResponse.json({ error: 'No active attempt found' }, { status: 404 });
     }
@@ -25,20 +30,27 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     const now = Date.now();
+    const deadlineTime = Number(attempt.deadline_time);
     // Allow small 10-second grace period for in-flight autosave packets right at deadline
-    if (now > attempt.deadline_time + 10000) {
-      db.prepare("UPDATE attempts SET status = 'expired' WHERE id = ?").run(attempt.id);
+    if (now > deadlineTime + 10000) {
+      await db.execute("UPDATE attempts SET status = 'expired' WHERE id = $1", [attempt.id]);
       return NextResponse.json({ error: 'Examination duration has expired' }, { status: 403 });
     }
 
     // Verify question belongs to this exam
-    const belongs = db.prepare('SELECT id FROM exam_questions WHERE exam_id = ? AND question_id = ?').get(examId, questionId);
+    const belongs = await db.queryOne(
+      'SELECT id FROM exam_questions WHERE exam_id = $1 AND question_id = $2',
+      [examId, questionId]
+    );
     if (!belongs) {
       return NextResponse.json({ error: 'Question does not belong to this exam' }, { status: 400 });
     }
 
     // Check version concurrency to prevent stale overwrites
-    const existingAnswer = db.prepare('SELECT version FROM attempt_answers WHERE attempt_id = ? AND question_id = ?').get(attempt.id, questionId) as any;
+    const existingAnswer = await db.queryOne<any>(
+      'SELECT version FROM attempt_answers WHERE attempt_id = $1 AND question_id = $2',
+      [attempt.id, questionId]
+    );
     const incomingVersion = typeof version === 'number' ? version : (existingAnswer ? existingAnswer.version + 1 : 1);
 
     if (existingAnswer && existingAnswer.version > incomingVersion) {
@@ -57,15 +69,15 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const marked = Boolean(isMarkedForReview) ? 1 : 0;
     const answerId = 'ans_' + crypto.randomUUID().slice(0, 8);
 
-    db.prepare(`
+    await db.execute(`
       INSERT INTO attempt_answers (id, attempt_id, question_id, selected_option_index, is_marked_for_review, saved_at, version)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT(attempt_id, question_id) DO UPDATE SET
-        selected_option_index = excluded.selected_option_index,
-        is_marked_for_review = excluded.is_marked_for_review,
-        saved_at = excluded.saved_at,
-        version = excluded.version
-    `).run(answerId, attempt.id, questionId, selectedIdx, marked, now, incomingVersion);
+        selected_option_index = EXCLUDED.selected_option_index,
+        is_marked_for_review = EXCLUDED.is_marked_for_review,
+        saved_at = EXCLUDED.saved_at,
+        version = EXCLUDED.version
+    `, [answerId, attempt.id, questionId, selectedIdx, marked, now, incomingVersion]);
 
     return NextResponse.json({
       success: true,

@@ -7,9 +7,29 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password, name, setupCode } = body;
 
-    const expectedSetupCode = process.env.ASSESS_ADMIN_SETUP_CODE || 'Talvyn@Assess2026!';
-    if (!setupCode || setupCode !== expectedSetupCode) {
-      return NextResponse.json({ error: 'Invalid administrator setup authorization code' }, { status: 403 });
+    const configuredSetupCode = process.env.ASSESS_ADMIN_SETUP_CODE?.trim();
+    if (!configuredSetupCode) {
+      return NextResponse.json(
+        { error: 'Administrator registration is currently disabled by server policy. Contact your system administrator.' },
+        { status: 503 }
+      );
+    }
+
+    if (!setupCode || typeof setupCode !== 'string') {
+      return NextResponse.json(
+        { error: 'Administrator setup authorization code is required' },
+        { status: 403 }
+      );
+    }
+
+    const inputBuffer = Buffer.from(setupCode.trim());
+    const expectedBuffer = Buffer.from(configuredSetupCode);
+
+    if (inputBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(inputBuffer, expectedBuffer)) {
+      return NextResponse.json(
+        { error: 'Invalid administrator setup authorization code' },
+        { status: 403 }
+      );
     }
 
     if (!email || !password || !name) {
@@ -21,7 +41,10 @@ export async function POST(request: Request) {
     }
 
     const db = getDb();
-    const existing = db.prepare('SELECT id FROM users WHERE email = ? COLLATE NOCASE').get(email.trim());
+    const existing = await db.queryOne<{ id: string }>(
+      'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+      [email.trim()]
+    );
     if (existing) {
       return NextResponse.json({ error: 'A user with this email already exists' }, { status: 409 });
     }
@@ -30,10 +53,11 @@ export async function POST(request: Request) {
     const { hash, salt } = hashPassword(password);
     const now = Date.now();
 
-    db.prepare(`
-      INSERT INTO users (id, email, password_hash, salt, role, name, department, created_at)
-      VALUES (?, ?, ?, ?, 'admin', ?, 'Administration', ?)
-    `).run(userId, email.trim(), hash, salt, name.trim(), now);
+    await db.execute(
+      `INSERT INTO users (id, email, password_hash, salt, role, name, department, created_at)
+       VALUES ($1, $2, $3, $4, 'admin', $5, 'Administration', $6)`,
+      [userId, email.trim(), hash, salt, name.trim(), now]
+    );
 
     return NextResponse.json({
       success: true,

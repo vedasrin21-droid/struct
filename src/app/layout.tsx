@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { LaunchGate } from '@/components/LaunchGate';
+import { ClerkWrapper } from '@/components/ClerkWrapper';
 
 export const metadata: Metadata = {
   title: 'STRUCT — Premium Resume Score Checker, ATS Optimization & Assessments',
@@ -38,7 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <LaunchGate>{children}</LaunchGate>
+        <ClerkWrapper>
+          <LaunchGate>{children}</LaunchGate>
+        </ClerkWrapper>
       </body>
     </html>
   );

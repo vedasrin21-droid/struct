@@ -36,14 +36,66 @@ export function ResumeBuilder({
   // Suggestions drawer modal state
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
 
+  // PDF Export Status State
+  const [exportStatus, setExportStatus] = useState<'idle' | 'preparing' | 'printing' | 'success'>('idle');
+  const isExporting = exportStatus === 'preparing' || exportStatus === 'printing';
+
   const resumePrintRef = useRef<HTMLDivElement>(null);
 
   // ---------------- Handlers ----------------
 
-  const handlePrint = () => {
-    // Add printable class to body temporarily or trigger window.print
-    window.print();
+  const handleExportPdf = () => {
+    if (isExporting) return;
+
+    setExportStatus('preparing');
+
+    const originalTitle = typeof document !== 'undefined' ? document.title : '';
+    const candidateName = resumeData.contact.fullName?.trim() || 'Candidate';
+    const cleanName = candidateName.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
+    const pdfFilename = `${cleanName}_Resume`;
+
+    if (typeof document !== 'undefined') {
+      document.title = pdfFilename;
+    }
+
+    setTimeout(() => {
+      setExportStatus('printing');
+      try {
+        if (typeof window !== 'undefined') {
+          window.print();
+        }
+      } catch (err) {
+        console.error('Error invoking print dialog:', err);
+      }
+
+      const cleanup = () => {
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('afterprint', cleanup);
+        }
+        if (typeof document !== 'undefined') {
+          document.title = originalTitle;
+        }
+        setExportStatus('success');
+        setTimeout(() => {
+          setExportStatus('idle');
+        }, 2200);
+      };
+
+      if (typeof window !== 'undefined') {
+        window.addEventListener('afterprint', cleanup);
+      }
+
+      // Safety timeout in case afterprint does not fire in the browser/environment
+      setTimeout(() => {
+        if (typeof document !== 'undefined' && document.title === pdfFilename) {
+          document.title = originalTitle;
+        }
+        setExportStatus(prev => (prev === 'printing' ? 'idle' : prev));
+      }, 4000);
+    }, 200);
   };
+
+  const handlePrint = handleExportPdf;
 
   const updateContact = (field: keyof ResumeData['contact'], val: string) => {
     setResumeData(prev => ({
@@ -363,11 +415,50 @@ export function ResumeBuilder({
             )}
 
             <button
-              onClick={handlePrint}
+              onClick={handleExportPdf}
+              disabled={isExporting}
               className="btn btn-primary btn-sm"
-              style={{ fontWeight: 700 }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                fontWeight: 700,
+                cursor: isExporting ? 'wait' : 'pointer',
+                opacity: isExporting ? 0.8 : 1,
+              }}
+              title="Export resume as ATS-compliant PDF (Letter / A4)"
             >
-              <span>Download ATS PDF</span>
+              {exportStatus === 'preparing' ? (
+                <>
+                  <svg className="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  <span>Preparing PDF...</span>
+                </>
+              ) : exportStatus === 'printing' ? (
+                <>
+                  <svg className="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                  <span>Opening Dialog...</span>
+                </>
+              ) : exportStatus === 'success' ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Export Ready!</span>
+                </>
+              ) : (
+                <>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>Export PDF</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -1268,6 +1359,164 @@ export function ResumeBuilder({
               gap: '16px',
             }}
           >
+            {/* Preview Toolbar */}
+            <div
+              className="preview-toolbar no-print"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 18px',
+                background: '#FFFFFF',
+                borderRadius: '12px',
+                border: '1px solid var(--brand-border)',
+                boxShadow: '0 2px 8px rgba(10, 27, 56, 0.04)',
+                gap: '12px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    color: 'var(--brand-dark)',
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                  </svg>
+                  <span>Resume Preview</span>
+                </div>
+
+                {/* Quick Layout Switcher in Preview Toolbar */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'var(--brand-bg)',
+                    padding: '3px',
+                    borderRadius: '8px',
+                    gap: '2px',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveLayout('classic')}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '0.74rem',
+                      fontWeight: activeLayout === 'classic' ? 700 : 500,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: activeLayout === 'classic' ? '#FFFFFF' : 'transparent',
+                      color: activeLayout === 'classic' ? 'var(--brand-primary)' : 'var(--brand-text-muted)',
+                      boxShadow: activeLayout === 'classic' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                    title="Classic Executive Layout (Serif)"
+                  >
+                    Classic
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveLayout('modern')}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '0.74rem',
+                      fontWeight: activeLayout === 'modern' ? 700 : 500,
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: activeLayout === 'modern' ? '#FFFFFF' : 'transparent',
+                      color: activeLayout === 'modern' ? 'var(--brand-primary)' : 'var(--brand-text-muted)',
+                      boxShadow: activeLayout === 'modern' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                    title="Modern Clean Layout (Sans-serif)"
+                  >
+                    Modern
+                  </button>
+                </div>
+
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    color: '#15803D',
+                    background: '#DCFCE7',
+                    border: '1px solid #BBF7D0',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Letter &bull; A4 ATS Fit
+                </span>
+              </div>
+
+              {/* Action: Export PDF Button */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  disabled={isExporting}
+                  className="btn btn-primary btn-sm"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '7px',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    padding: '8px 18px',
+                    cursor: isExporting ? 'wait' : 'pointer',
+                    opacity: isExporting ? 0.8 : 1,
+                  }}
+                  title="Export resume as ATS-compliant PDF"
+                >
+                  {exportStatus === 'preparing' ? (
+                    <>
+                      <svg className="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                      <span>Preparing PDF...</span>
+                    </>
+                  ) : exportStatus === 'printing' ? (
+                    <>
+                      <svg className="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                      <span>Opening Dialog...</span>
+                    </>
+                  ) : exportStatus === 'success' ? (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Export Ready!</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Export PDF</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* Sheet Container */}
             <div
               id="resume-print-area"
@@ -1289,11 +1538,14 @@ export function ResumeBuilder({
             >
               {/* HEADER SECTION */}
               <div
+                className="resume-header"
                 style={{
                   textAlign: activeLayout === 'classic' ? 'center' : 'left',
                   borderBottom: activeLayout === 'classic' ? '1.5px solid #1F2937' : '2.5px solid #12336B',
                   paddingBottom: '14px',
                   marginBottom: '16px',
+                  breakInside: 'avoid',
+                  pageBreakInside: 'avoid',
                 }}
               >
                 <h1
@@ -1372,8 +1624,9 @@ export function ResumeBuilder({
 
                 if (secKey === 'summary' && resumeData.summary.trim()) {
                   return (
-                    <div key="sec-summary" style={{ marginBottom: '16px' }}>
+                    <div key="sec-summary" className="resume-section" style={{ marginBottom: '16px', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                       <div
+                        className="resume-section-heading"
                         style={{
                           fontSize: '10.5pt',
                           fontWeight: 700,
@@ -1383,6 +1636,8 @@ export function ResumeBuilder({
                           borderBottom: activeLayout === 'classic' ? '1px solid #D1D5DB' : '1.5px solid #E5E7EB',
                           paddingBottom: '2px',
                           marginBottom: '6px',
+                          breakAfter: 'avoid',
+                          pageBreakAfter: 'avoid',
                         }}
                       >
                         Professional Summary
@@ -1396,8 +1651,9 @@ export function ResumeBuilder({
 
                 if (secKey === 'experience' && resumeData.experience.length > 0) {
                   return (
-                    <div key="sec-experience" style={{ marginBottom: '16px' }}>
+                    <div key="sec-experience" className="resume-section" style={{ marginBottom: '16px' }}>
                       <div
+                        className="resume-section-heading"
                         style={{
                           fontSize: '10.5pt',
                           fontWeight: 700,
@@ -1407,27 +1663,31 @@ export function ResumeBuilder({
                           borderBottom: activeLayout === 'classic' ? '1px solid #D1D5DB' : '1.5px solid #E5E7EB',
                           paddingBottom: '2px',
                           marginBottom: '8px',
+                          breakAfter: 'avoid',
+                          pageBreakAfter: 'avoid',
                         }}
                       >
                         Work Experience
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {resumeData.experience.map(job => (
-                          <div key={job.id} style={{ pageBreakInside: 'avoid' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <div key={job.id} className="resume-entry" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                            <div className="resume-item-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                               <strong style={{ fontSize: '10pt', color: '#111827' }}>
                                 {job.title} &mdash; <span style={{ fontWeight: 600, color: '#374151' }}>{job.company}</span>
                               </strong>
                               <span style={{ fontSize: '8.8pt', color: '#4B5563', whiteSpace: 'nowrap' }}>
-                                {job.startDate} &ndash; {job.endDate}
+                                {job.startDate} &ndash; {job.isCurrent ? 'Present' : job.endDate}
                               </span>
                             </div>
-                            <div style={{ fontSize: '8.5pt', color: '#6B7280', fontStyle: 'italic', marginBottom: '4px' }}>
-                              {job.location}
-                            </div>
+                            {job.location && (
+                              <div style={{ fontSize: '8.5pt', color: '#6B7280', fontStyle: 'italic', marginBottom: '4px' }}>
+                                {job.location}
+                              </div>
+                            )}
                             <ul style={{ margin: 0, paddingLeft: '18px', color: '#374151' }}>
                               {job.bullets.map((b, bIdx) => (
-                                <li key={bIdx} style={{ marginBottom: '3px' }}>
+                                <li key={bIdx} className="resume-bullet" style={{ marginBottom: '3px', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                                   {b}
                                 </li>
                               ))}
@@ -1441,8 +1701,9 @@ export function ResumeBuilder({
 
                 if (secKey === 'education' && resumeData.education.length > 0) {
                   return (
-                    <div key="sec-education" style={{ marginBottom: '16px' }}>
+                    <div key="sec-education" className="resume-section" style={{ marginBottom: '16px' }}>
                       <div
+                        className="resume-section-heading"
                         style={{
                           fontSize: '10.5pt',
                           fontWeight: 700,
@@ -1452,13 +1713,15 @@ export function ResumeBuilder({
                           borderBottom: activeLayout === 'classic' ? '1px solid #D1D5DB' : '1.5px solid #E5E7EB',
                           paddingBottom: '2px',
                           marginBottom: '8px',
+                          breakAfter: 'avoid',
+                          pageBreakAfter: 'avoid',
                         }}
                       >
                         Education
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {resumeData.education.map(edu => (
-                          <div key={edu.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <div key={edu.id} className="resume-entry" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                             <div>
                               <strong style={{ fontSize: '9.8pt', color: '#111827' }}>
                                 {edu.degree} in {edu.field}
@@ -1478,8 +1741,9 @@ export function ResumeBuilder({
 
                 if (secKey === 'skills' && resumeData.skills.length > 0) {
                   return (
-                    <div key="sec-skills" style={{ marginBottom: '16px' }}>
+                    <div key="sec-skills" className="resume-section" style={{ marginBottom: '16px', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                       <div
+                        className="resume-section-heading"
                         style={{
                           fontSize: '10.5pt',
                           fontWeight: 700,
@@ -1489,6 +1753,8 @@ export function ResumeBuilder({
                           borderBottom: activeLayout === 'classic' ? '1px solid #D1D5DB' : '1.5px solid #E5E7EB',
                           paddingBottom: '2px',
                           marginBottom: '6px',
+                          breakAfter: 'avoid',
+                          pageBreakAfter: 'avoid',
                         }}
                       >
                         Skills &amp; Competencies
@@ -1502,8 +1768,9 @@ export function ResumeBuilder({
 
                 if (secKey === 'projects' && resumeData.projects.length > 0) {
                   return (
-                    <div key="sec-projects" style={{ marginBottom: '16px' }}>
+                    <div key="sec-projects" className="resume-section" style={{ marginBottom: '16px' }}>
                       <div
+                        className="resume-section-heading"
                         style={{
                           fontSize: '10.5pt',
                           fontWeight: 700,
@@ -1513,14 +1780,16 @@ export function ResumeBuilder({
                           borderBottom: activeLayout === 'classic' ? '1px solid #D1D5DB' : '1.5px solid #E5E7EB',
                           paddingBottom: '2px',
                           marginBottom: '8px',
+                          breakAfter: 'avoid',
+                          pageBreakAfter: 'avoid',
                         }}
                       >
                         Key Projects
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {resumeData.projects.map(proj => (
-                          <div key={proj.id} style={{ pageBreakInside: 'avoid' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <div key={proj.id} className="resume-entry" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                            <div className="resume-item-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                               <strong style={{ fontSize: '9.8pt', color: '#111827' }}>
                                 {proj.name}
                               </strong>
@@ -1540,7 +1809,7 @@ export function ResumeBuilder({
                             </div>
                             <ul style={{ margin: 0, paddingLeft: '18px', color: '#374151' }}>
                               {proj.bullets.map((b, idx) => (
-                                <li key={idx} style={{ marginBottom: '2px' }}>
+                                <li key={idx} className="resume-bullet" style={{ marginBottom: '2px', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                                   {b}
                                 </li>
                               ))}
@@ -1554,8 +1823,9 @@ export function ResumeBuilder({
 
                 if (secKey === 'certifications' && resumeData.certifications.length > 0) {
                   return (
-                    <div key="sec-certifications" style={{ marginBottom: '16px' }}>
+                    <div key="sec-certifications" className="resume-section" style={{ marginBottom: '16px', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                       <div
+                        className="resume-section-heading"
                         style={{
                           fontSize: '10.5pt',
                           fontWeight: 700,
@@ -1565,13 +1835,15 @@ export function ResumeBuilder({
                           borderBottom: activeLayout === 'classic' ? '1px solid #D1D5DB' : '1.5px solid #E5E7EB',
                           paddingBottom: '2px',
                           marginBottom: '6px',
+                          breakAfter: 'avoid',
+                          pageBreakAfter: 'avoid',
                         }}
                       >
                         Certifications &amp; Credentials
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {resumeData.certifications.map(cert => (
-                          <div key={cert.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <div key={cert.id} className="resume-entry" style={{ display: 'flex', justifyContent: 'space-between', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                             <span style={{ color: '#111827', fontWeight: 600 }}>
                               {cert.name} &mdash; <span style={{ fontWeight: 400, color: '#4B5563' }}>{cert.issuer}</span>
                             </span>
@@ -1731,56 +2003,142 @@ export function ResumeBuilder({
       {/* Scoped CSS for Builder & Print Rules */}
       <style jsx global>{`
         @media print {
-          /* Hide all application elements */
-          body {
+          /* Reset root layout for pristine print output */
+          html, body {
             background: #FFFFFF !important;
             color: #000000 !important;
             margin: 0 !important;
             padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          nav, header, footer, .no-print, .mobile-view-toggle, .editor-column, .btn, .results-section, .hero-section {
-            display: none !important;
+
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
-          #resume-builder-container {
+
+          /* Hide application chrome, navbar, footer, drawer modals, toolbars, and editor controls */
+          nav, header, footer, .no-print, .preview-toolbar, .mobile-view-toggle, .editor-column, .btn, .results-section, .hero-section {
+            display: none !important;
+            visibility: hidden !important;
+          }
+
+          /* Reset container wrappers to prevent flex/height clipping */
+          div#__next, main, #resume-builder-container {
             background: #FFFFFF !important;
             padding: 0 !important;
             margin: 0 !important;
+            width: 100% !important;
+            min-height: 0 !important;
+            height: auto !important;
+            display: block !important;
+            overflow: visible !important;
           }
+
           .container {
             max-width: 100% !important;
+            width: 100% !important;
             padding: 0 !important;
             margin: 0 !important;
           }
+
           .builder-grid {
             display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          .preview-column {
+
+          /* Ensure preview column is visible regardless of mobile active tab */
+          .preview-column,
+          .preview-column.mobile-hidden {
             position: static !important;
             top: 0 !important;
             display: block !important;
             width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            visibility: visible !important;
           }
+
+          .editor-column,
+          .editor-column.mobile-hidden {
+            display: none !important;
+            visibility: hidden !important;
+          }
+
+          /* Resume Sheet Print Output */
           #resume-print-area {
+            background: #FFFFFF !important;
             box-shadow: none !important;
             border: none !important;
+            border-radius: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
             width: 100% !important;
-            min-height: auto !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            overflow: visible !important;
             font-size: 10pt !important;
+            line-height: 1.45 !important;
           }
-          #resume-print-area > div {
-            break-inside: auto;
+
+          /* Pagination and Break Rules for Clean Multi-Page Resumes */
+          .resume-header {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            break-after: avoid !important;
+            page-break-after: avoid !important;
           }
+
+          .resume-section {
+            break-inside: auto !important;
+            page-break-inside: auto !important;
+            margin-bottom: 14px !important;
+          }
+
+          .resume-section-heading {
+            break-after: avoid !important;
+            page-break-after: avoid !important;
+          }
+
+          .resume-entry {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+
+          .resume-item-header {
+            break-after: avoid !important;
+            page-break-after: avoid !important;
+          }
+
+          .resume-bullet {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+
+          a {
+            text-decoration: none !important;
+            color: inherit !important;
+          }
+
+          a[href^="http"]::after {
+            content: "" !important;
+          }
+
           @page {
-            size: letter portrait;
+            size: portrait;
             margin: 0.5in;
           }
         }
 
-        @media (max-width: 900px) {
+        @media screen and (max-width: 900px) {
           .builder-grid {
             grid-template-columns: 1fr !important;
           }

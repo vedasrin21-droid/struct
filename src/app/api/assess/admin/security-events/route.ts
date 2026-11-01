@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/assess/db';
 import { requireAdmin } from '@/lib/assess/auth';
+import { getAuthContext } from '@/lib/auth/rbac';
 
 export async function GET(request: Request) {
   try {
     await requireAdmin(request);
+    const authCtx = await getAuthContext(request);
     const { searchParams } = new URL(request.url);
     const severity = searchParams.get('severity');
     const examId = searchParams.get('examId');
 
     const db = getDb();
+    const isSuperAdmin = authCtx?.role === 'super_admin';
+    const orgId = authCtx?.organizationId;
 
     let query = `
       SELECT 
@@ -25,20 +29,26 @@ export async function GET(request: Request) {
     `;
     const params: any[] = [];
 
+    // Enforce tenant boundary for non-superadmins
+    if (!isSuperAdmin && orgId) {
+      params.push(orgId);
+      query += ` AND e.organization_id = $${params.length}`;
+    }
+
     if (severity) {
-      query += ' AND se.severity = ?';
       params.push(severity);
+      query += ` AND se.severity = $${params.length}`;
     }
     if (examId) {
-      query += ' AND se.exam_id = ?';
       params.push(examId);
+      query += ` AND se.exam_id = $${params.length}`;
     }
 
     query += ' ORDER BY se.created_at DESC LIMIT 200';
 
-    const events = db.prepare(query).all(...params);
+    const result = await db.query<any>(query, params);
 
-    return NextResponse.json({ events });
+    return NextResponse.json({ events: result.rows });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN_ADMIN_REQUIRED') {
       return NextResponse.json({ error: 'Administrator access required' }, { status: 403 });

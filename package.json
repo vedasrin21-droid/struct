@@ -9,19 +9,34 @@
     "lint": "eslint",
     "test": "npx tsx test-suite.mjs",
     "test:assess": "npx tsx assess-test-suite.mjs",
-    "test:all": "npx tsx test-suite.mjs && npx tsx assess-test-suite.mjs"
+    "test:launch": "npx tsx launch-gate-test-suite.mjs",
+    "test:payments": "npx tsx payment-test-suite.mjs",
+    "test:audit": "npx tsx phase3-audit-test-suite.mjs",
+    "test:security": "npx tsx security-auth-test-suite.mjs",
+    "test:export": "npx tsx resume-export-test-suite.mjs",
+    "test:org": "npx tsx org-onboarding-test-suite.mjs",
+    "test:practice": "npx tsx candidate-practice-catalog-test-suite.mjs",
+    "test:v1": "npx tsx v1-launch-readiness-test-suite.mjs",
+    "test:all": "npx tsx test-suite.mjs && npx tsx assess-test-suite.mjs && npx tsx launch-gate-test-suite.mjs && npx tsx payment-test-suite.mjs && npx tsx phase3-audit-test-suite.mjs && npx tsx security-auth-test-suite.mjs && npx tsx resume-export-test-suite.mjs && npx tsx org-onboarding-test-suite.mjs && npx tsx candidate-practice-catalog-test-suite.mjs && npx tsx v1-launch-readiness-test-suite.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
+    "@clerk/nextjs": "^7.9.23",
     "lucide-react": "^1.60.0",
     "mammoth": "^1.13.0",
     "next": "16.4.2",
     "pdf-parse": "^2.4.5",
+    "pg": "^8.23.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "resend": "^6.37.0",
+    "svix": "^2.9.1"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.5",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

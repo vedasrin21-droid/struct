@@ -9,13 +9,13 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id: examId } = await context.params;
     const db = getDb();
 
-    const exam = db.prepare('SELECT id, title, code, department FROM exams WHERE id = ?').get(examId) as any;
+    const exam = await db.queryOne<any>('SELECT id, title, code, department FROM exams WHERE id = $1', [examId]);
     if (!exam) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
 
     // Get all candidates and check if assigned to this exam
-    const candidates = db.prepare(`
+    const candResult = await db.query<any>(`
       SELECT 
         u.id, u.name, u.email, u.department, u.college, u.status as user_status,
         ea.id as assignment_id,
@@ -25,23 +25,23 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         att.status as attempt_status,
         att.score
       FROM users u
-      LEFT JOIN exam_assignments ea ON ea.candidate_id = u.id AND ea.exam_id = ?
-      LEFT JOIN attempts att ON att.candidate_id = u.id AND att.exam_id = ?
+      LEFT JOIN exam_assignments ea ON ea.candidate_id = u.id AND ea.exam_id = $1
+      LEFT JOIN attempts att ON att.candidate_id = u.id AND att.exam_id = $2
       WHERE u.role = 'candidate'
       ORDER BY u.name ASC
-    `).all(examId, examId) as any[];
+    `, [examId, examId]);
 
-    const departments = db.prepare("SELECT DISTINCT department FROM users WHERE role = 'candidate' AND department != '' ORDER BY department ASC").all() as any[];
-    const colleges = db.prepare("SELECT DISTINCT college FROM users WHERE role = 'candidate' AND college != '' ORDER BY college ASC").all() as any[];
+    const deptResult = await db.query<any>("SELECT DISTINCT department FROM users WHERE role = 'candidate' AND department != '' ORDER BY department ASC");
+    const colResult = await db.query<any>("SELECT DISTINCT college FROM users WHERE role = 'candidate' AND college != '' ORDER BY college ASC");
 
     return NextResponse.json({
       exam,
-      candidates: candidates.map(c => ({
+      candidates: candResult.rows.map(c => ({
         ...c,
         isAssigned: Boolean(c.assignment_id),
       })),
-      departments: departments.map(d => d.department),
-      colleges: colleges.map(c => c.college),
+      departments: deptResult.rows.map(d => d.department),
+      colleges: colResult.rows.map(c => c.college),
     });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN_ADMIN_REQUIRED') {
@@ -59,7 +59,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const { action, candidateIds, department, college, assignAll } = body;
 
     const db = getDb();
-    const exam = db.prepare('SELECT id, title, code FROM exams WHERE id = ?').get(examId) as any;
+    const exam = await db.queryOne<any>('SELECT id, title, code FROM exams WHERE id = $1', [examId]);
     if (!exam) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
@@ -68,51 +68,50 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     let targetCandidateIds: string[] = [];
 
     if (assignAll) {
-      const allCand = db.prepare("SELECT id FROM users WHERE role = 'candidate' AND status = 'active'").all() as any[];
-      targetCandidateIds = allCand.map(c => c.id);
+      const allCandResult = await db.query<any>("SELECT id FROM users WHERE role = 'candidate' AND status = 'active'");
+      targetCandidateIds = allCandResult.rows.map(c => c.id);
     } else if (department) {
-      const deptCand = db.prepare("SELECT id FROM users WHERE role = 'candidate' AND department = ?").all(department) as any[];
-      targetCandidateIds = deptCand.map(c => c.id);
+      const deptCandResult = await db.query<any>("SELECT id FROM users WHERE role = 'candidate' AND department = $1", [department]);
+      targetCandidateIds = deptCandResult.rows.map(c => c.id);
     } else if (college) {
-      const colCand = db.prepare("SELECT id FROM users WHERE role = 'candidate' AND college = ?").all(college) as any[];
-      targetCandidateIds = colCand.map(c => c.id);
+      const colCandResult = await db.query<any>("SELECT id FROM users WHERE role = 'candidate' AND college = $1", [college]);
+      targetCandidateIds = colCandResult.rows.map(c => c.id);
     } else if (Array.isArray(candidateIds)) {
       targetCandidateIds = candidateIds;
     }
 
     if (action === 'unassign') {
       if (targetCandidateIds.length > 0) {
-        const placeholders = targetCandidateIds.map(() => '?').join(',');
-        db.prepare(`
+        const placeholders = targetCandidateIds.map((_, i) => `$${i + 2}`).join(',');
+        await db.execute(`
           DELETE FROM exam_assignments 
-          WHERE exam_id = ? AND candidate_id IN (${placeholders})
-          AND status = 'assigned' -- Don't delete if attempt already started or completed
-        `).run(examId, ...targetCandidateIds);
+          WHERE exam_id = $1 AND candidate_id IN (${placeholders})
+          AND status = 'assigned'
+        `, [examId, ...targetCandidateIds]);
       }
     } else {
       // Assign
-      const assignStmt = db.prepare(`
-        INSERT OR IGNORE INTO exam_assignments (id, exam_id, candidate_id, assigned_at, status)
-        VALUES (?, ?, ?, ?, 'assigned')
-      `);
-
-      targetCandidateIds.forEach(cId => {
-        assignStmt.run(`asg_${examId}_${cId}`, examId, cId, now);
-      });
+      for (const cId of targetCandidateIds) {
+        await db.execute(`
+          INSERT INTO exam_assignments (id, exam_id, candidate_id, assigned_at, status)
+          VALUES ($1, $2, $3, $4, 'assigned')
+          ON CONFLICT (exam_id, candidate_id) DO NOTHING
+        `, [`asg_${examId}_${cId}`, examId, cId, now]);
+      }
     }
 
     // Audit log
-    db.prepare(`
+    await db.execute(`
       INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, created_at)
-      VALUES (?, ?, 'update_assignments', 'exam', ?, ?, ?)
-    `).run('aud_' + crypto.randomUUID().slice(0, 8), admin.id, examId, `${action || 'assign'} ${targetCandidateIds.length} candidate(s) for exam ${exam.code}`, now);
+      VALUES ($1, $2, 'update_assignments', 'exam', $3, $4, $5)
+    `, ['aud_' + crypto.randomUUID().slice(0, 8), admin.id, examId, `${action || 'assign'} ${targetCandidateIds.length} candidate(s) for exam ${exam.code}`, now]);
 
-    const totalAssigned = db.prepare('SELECT COUNT(*) as count FROM exam_assignments WHERE exam_id = ?').get(examId) as any;
+    const totalAssignedRow = await db.queryOne<any>('SELECT COUNT(*) as count FROM exam_assignments WHERE exam_id = $1', [examId]);
 
     return NextResponse.json({
       success: true,
       message: `Successfully updated exam assignments`,
-      totalAssigned: totalAssigned.count,
+      totalAssigned: Number(totalAssignedRow?.count || 0),
     });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN_ADMIN_REQUIRED') {

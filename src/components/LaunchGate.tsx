@@ -99,12 +99,19 @@ interface Particle {
   vRot: number;
 }
 
+// Environment configurations
+const IS_GATE_ENABLED_ENV = process.env.NEXT_PUBLIC_LAUNCH_GATE_ENABLED === 'true';
+const CONFIGURED_PASSCODE = process.env.NEXT_PUBLIC_LAUNCH_PASSCODE || '2118';
+const LAUNCH_DATE_STR = process.env.NEXT_PUBLIC_LAUNCH_DATE || '2026-10-29T09:00:00+05:30';
+const LAUNCH_LABEL = process.env.NEXT_PUBLIC_LAUNCH_LABEL || 'Thursday, October 29, 2026 at 9:00 AM';
+const SHOW_PASSCODE_HINT = process.env.NEXT_PUBLIC_SHOW_PASSCODE_HINT !== 'false';
+
 export function LaunchGate({ children }: { children: React.ReactNode }) {
-  // Launch Stages:
-  // 'ribbon' -> First launch ceremony with ribbon cutting
-  // 'countdown' -> Ribbon cut, counting down to 11:50 AM with Passcode 2118 entry
-  // 'unlocked' -> Full access granted
-  const [stage, setStage] = useState<'loading' | 'ribbon' | 'countdown' | 'unlocked'>('loading');
+  // If the gate is NOT explicitly enabled via env var, default to unlocked
+  // to grant immediate public access to all landing, resume, and assessment routes.
+  const [stage, setStage] = useState<'loading' | 'ribbon' | 'countdown' | 'unlocked'>(
+    IS_GATE_ENABLED_ENV ? 'loading' : 'unlocked'
+  );
   const [isRibbonCutting, setIsRibbonCutting] = useState(false);
   const [isRibbonCut, setIsRibbonCut] = useState(false);
 
@@ -138,37 +145,65 @@ export function LaunchGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Check URL parameters for secret admin controls
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('launch_admin') === 'reset' || urlParams.get('launch_reset') === '1') {
-      localStorage.removeItem('talvyn_launch_permanent_unlocked');
-      localStorage.removeItem('talvyn_launch_stage');
-      localStorage.setItem('talvyn_launch_run_count', '1');
-      setStage('ribbon');
-      setRunCount(1);
-      window.history.replaceState({}, '', window.location.pathname);
-      return;
-    }
-    if (urlParams.get('launch_unlock') === '2118') {
-      localStorage.setItem('talvyn_launch_permanent_unlocked', 'true');
-      localStorage.setItem('talvyn_launch_stage', 'unlocked');
-      setStage('unlocked');
-      window.history.replaceState({}, '', window.location.pathname);
-      return;
-    }
+    const initTimer = setTimeout(() => {
+      // Check URL parameters for preview controls
+      const urlParams = new URLSearchParams(window.location.search);
+      const forcePreview = urlParams.get('preview') === 'gate' || urlParams.get('launch_gate') === '1';
+      const forceSkip =
+        urlParams.get('preview') === 'skip' ||
+        urlParams.get('launch_unlock') === CONFIGURED_PASSCODE ||
+        urlParams.get('launch_unlock') === '2118';
 
-    const savedUnlocked = localStorage.getItem('talvyn_launch_permanent_unlocked');
-    const savedStage = localStorage.getItem('talvyn_launch_stage') as 'ribbon' | 'countdown' | 'unlocked' | null;
-    const savedRuns = parseInt(localStorage.getItem('talvyn_launch_run_count') || '1', 10);
-    setRunCount(savedRuns);
+      // 1. Explicit skip or unlock via query param
+      if (forceSkip) {
+        localStorage.setItem('talvyn_launch_permanent_unlocked', 'true');
+        localStorage.setItem('talvyn_launch_stage', 'unlocked');
+        setStage('unlocked');
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
 
-    if (savedUnlocked === 'true') {
-      setStage('unlocked');
-    } else if (savedStage === 'countdown') {
-      setStage('countdown');
-    } else {
-      setStage('ribbon');
-    }
+      // 2. Secret admin reset query parameters
+      if (urlParams.get('launch_admin') === 'reset' || urlParams.get('launch_reset') === '1') {
+        localStorage.removeItem('talvyn_launch_permanent_unlocked');
+        localStorage.removeItem('talvyn_launch_stage');
+        localStorage.setItem('talvyn_launch_run_count', '1');
+        setStage('ribbon');
+        setRunCount(1);
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+
+      // 3. If gate is disabled globally and not forced via query parameter, grant immediate access
+      if (!IS_GATE_ENABLED_ENV && !forcePreview) {
+        setStage('unlocked');
+        return;
+      }
+
+      // 4. Auto-unlock if target launch timestamp has already arrived
+      const targetDate = new Date(LAUNCH_DATE_STR);
+      const validTargetTime = !isNaN(targetDate.getTime()) ? targetDate.getTime() : new Date('2026-10-29T09:00:00+05:30').getTime();
+      if (Date.now() >= validTargetTime) {
+        setStage('unlocked');
+        localStorage.setItem('talvyn_launch_permanent_unlocked', 'true');
+        localStorage.setItem('talvyn_launch_stage', 'unlocked');
+        return;
+      }
+
+      // 5. Check persistent localStorage state
+      const savedUnlocked = localStorage.getItem('talvyn_launch_permanent_unlocked');
+      const savedStage = localStorage.getItem('talvyn_launch_stage') as 'ribbon' | 'countdown' | 'unlocked' | null;
+      const savedRuns = parseInt(localStorage.getItem('talvyn_launch_run_count') || '1', 10);
+      setRunCount(savedRuns);
+
+      if (savedUnlocked === 'true') {
+        setStage('unlocked');
+      } else if (savedStage === 'countdown') {
+        setStage('countdown');
+      } else {
+        setStage('ribbon');
+      }
+    }, 0);
 
     // Keyboard shortcut for internal team: Ctrl + Shift + L
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -178,20 +213,28 @@ export function LaunchGate({ children }: { children: React.ReactNode }) {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(initTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
-  // Countdown timer logic to 11:50 AM today
+  // Countdown timer logic
   useEffect(() => {
     if (stage !== 'countdown') return;
 
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 50, 0, 0);
+    const targetDate = new Date(LAUNCH_DATE_STR);
+    const validTargetTime = !isNaN(targetDate.getTime()) ? targetDate.getTime() : new Date('2026-10-29T09:00:00+05:30').getTime();
 
-      let diff = target.getTime() - now.getTime();
+    const calculateTimeLeft = () => {
+      const now = Date.now();
+      let diff = validTargetTime - now;
       if (diff <= 0) {
         diff = 0;
+        // Target launch time reached! Automatically unlock public access
+        setStage('unlocked');
+        localStorage.setItem('talvyn_launch_permanent_unlocked', 'true');
+        localStorage.setItem('talvyn_launch_stage', 'unlocked');
       }
 
       const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -330,7 +373,7 @@ export function LaunchGate({ children }: { children: React.ReactNode }) {
 
   const verifyPasscode = (codeToTest?: string) => {
     const code = codeToTest || passcode.join('');
-    if (code === '2118') {
+    if (code === CONFIGURED_PASSCODE || code === '2118') {
       playSynthesizedSound('unlock');
       setPasscodeSuccess(true);
       setPasscodeError(false);
@@ -429,7 +472,7 @@ export function LaunchGate({ children }: { children: React.ReactNode }) {
                   boxShadow: '0 6px 14px rgba(220, 38, 38, 0.25)',
                 }}
               >
-                🔒 Reset for Tomorrow&apos;s Launch
+                🔒 Re-lock for Launch Ceremony
               </button>
               <button
                 onClick={() => setShowAdminModal(false)}
@@ -1036,8 +1079,15 @@ export function LaunchGate({ children }: { children: React.ReactNode }) {
               lineHeight: 1.5,
             }}
           >
-            Scheduled for <strong>11:50 AM Today</strong>. Enter the Master Authorization Code{' '}
-            <strong style={{ color: 'var(--brand-primary, #12336B)' }}>2118</strong> to unlock immediate access.
+            Scheduled for <strong>{LAUNCH_LABEL}</strong>.{' '}
+            {SHOW_PASSCODE_HINT ? (
+              <>
+                Enter Authorization Code{' '}
+                <strong style={{ color: 'var(--brand-primary, #12336B)' }}>{CONFIGURED_PASSCODE}</strong> to unlock preview access.
+              </>
+            ) : (
+              'Enter the Master Authorization Code to unlock preview access.'
+            )}
           </p>
 
           {/* ================= LIVE CLAY COUNTDOWN CLOCK ================= */}
@@ -1119,7 +1169,7 @@ export function LaunchGate({ children }: { children: React.ReactNode }) {
                 marginBottom: '16px',
               }}
             >
-              Enter Authorization Code (2118)
+              Enter Authorization Code {SHOW_PASSCODE_HINT ? `(${CONFIGURED_PASSCODE})` : ''}
             </div>
 
             {/* 4 Digit Boxes */}
@@ -1174,7 +1224,7 @@ export function LaunchGate({ children }: { children: React.ReactNode }) {
                   animation: 'shake 0.4s ease',
                 }}
               >
-                ⚠️ Invalid code. Please enter the official launch code (2118).
+                ⚠️ Invalid authorization code. Please enter the correct launch code.
               </div>
             )}
 

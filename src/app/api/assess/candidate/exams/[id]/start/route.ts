@@ -10,7 +10,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const db = getDb();
 
     // 1. Verify exam existence and status
-    const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(examId) as any;
+    const exam = await db.queryOne<any>('SELECT * FROM exams WHERE id = $1', [examId]);
     if (!exam) {
       return NextResponse.json({ error: 'Exam not found' }, { status: 404 });
     }
@@ -20,7 +20,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     // 2. Verify candidate assignment
-    const assignment = db.prepare('SELECT * FROM exam_assignments WHERE exam_id = ? AND candidate_id = ?').get(examId, candidate.id) as any;
+    const assignment = await db.queryOne<any>(
+      'SELECT * FROM exam_assignments WHERE exam_id = $1 AND candidate_id = $2',
+      [examId, candidate.id]
+    );
     if (!assignment) {
       return NextResponse.json({ error: 'You are not assigned to take this examination' }, { status: 403 });
     }
@@ -28,9 +31,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const now = Date.now();
 
     // 3. Check existing attempt (single attempt rule)
-    const existingAttempt = db.prepare('SELECT * FROM attempts WHERE exam_id = ? AND candidate_id = ?').get(examId, candidate.id) as any;
+    const existingAttempt = await db.queryOne<any>(
+      'SELECT * FROM attempts WHERE exam_id = $1 AND candidate_id = $2',
+      [examId, candidate.id]
+    );
 
     if (existingAttempt) {
+      const deadlineTime = Number(existingAttempt.deadline_time);
       if (existingAttempt.status === 'submitted') {
         return NextResponse.json({
           error: 'You have already completed and submitted this examination. Re-attempts are not permitted.',
@@ -39,10 +46,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         }, { status: 409 });
       }
 
-      if (now > existingAttempt.deadline_time) {
+      if (now > deadlineTime) {
         // Automatically mark expired if time has elapsed
-        db.prepare("UPDATE attempts SET status = 'expired' WHERE id = ?").run(existingAttempt.id);
-        db.prepare("UPDATE exam_assignments SET status = 'expired' WHERE exam_id = ? AND candidate_id = ?").run(examId, candidate.id);
+        await db.execute("UPDATE attempts SET status = 'expired' WHERE id = $1", [existingAttempt.id]);
+        await db.execute("UPDATE exam_assignments SET status = 'expired' WHERE exam_id = $1 AND candidate_id = $2", [examId, candidate.id]);
         return NextResponse.json({
           error: 'Your examination window has expired.',
           status: 'expired',
@@ -53,61 +60,66 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({
         success: true,
         attemptId: existingAttempt.id,
-        startTime: existingAttempt.start_time,
-        deadlineTime: existingAttempt.deadline_time,
-        remainingSeconds: Math.max(0, Math.floor((existingAttempt.deadline_time - now) / 1000)),
+        startTime: Number(existingAttempt.start_time),
+        deadlineTime: deadlineTime,
+        remainingSeconds: Math.max(0, Math.floor((deadlineTime - now) / 1000)),
         isResumed: true,
       });
     }
 
-    // 4. Create new attempt atomically
+    // 4. Create new attempt atomically in a transaction
     const attemptId = 'att_' + crypto.randomUUID().slice(0, 8);
-    const deadlineTime = now + (exam.duration_minutes * 60 * 1000);
+    const deadlineTime = now + (Number(exam.duration_minutes) * 60 * 1000);
 
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     const userAgent = request.headers.get('user-agent') || 'Browser';
 
-    db.prepare(`
-      INSERT INTO attempts (
-        id, exam_id, candidate_id, start_time, deadline_time, status, ip_address, user_agent, created_at
-      ) VALUES (?, ?, ?, ?, ?, 'in_progress', ?, ?, ?)
-    `).run(attemptId, examId, candidate.id, now, deadlineTime, ip, userAgent, now);
+    await db.transaction(async (tx) => {
+      await tx.execute(`
+        INSERT INTO attempts (
+          id, exam_id, candidate_id, start_time, deadline_time, status, ip_address, user_agent, created_at
+        ) VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, $7, $8)
+      `, [attemptId, examId, candidate.id, now, deadlineTime, ip, userAgent, now]);
 
-    db.prepare("UPDATE exam_assignments SET status = 'in_progress' WHERE exam_id = ? AND candidate_id = ?").run(examId, candidate.id);
+      await tx.execute(
+        "UPDATE exam_assignments SET status = 'in_progress' WHERE exam_id = $1 AND candidate_id = $2",
+        [examId, candidate.id]
+      );
 
-    // 5. Freeze Questions for this Attempt (Mandatory questions MUST be asked; pool questions randomly selected)
-    const examQRows = db.prepare(`
-      SELECT eq.question_id, eq.order_index, COALESCE(eq.is_mandatory, 0) as is_mandatory
-      FROM exam_questions eq
-      WHERE eq.exam_id = ?
-      ORDER BY eq.order_index ASC
-    `).all(examId) as any[];
+      // Freeze Questions for this Attempt (Mandatory questions MUST be asked; pool questions randomly selected)
+      const examQResult = await tx.query<any>(`
+        SELECT eq.question_id, eq.order_index, COALESCE(eq.is_mandatory, 0) as is_mandatory
+        FROM exam_questions eq
+        WHERE eq.exam_id = $1
+        ORDER BY eq.order_index ASC
+      `, [examId]);
 
-    const mandatoryQuestions = examQRows.filter(q => q.is_mandatory === 1);
-    const poolQuestions = examQRows.filter(q => q.is_mandatory !== 1);
+      const examQRows = examQResult.rows;
+      const mandatoryQuestions = examQRows.filter(q => Number(q.is_mandatory) === 1);
+      const poolQuestions = examQRows.filter(q => Number(q.is_mandatory) !== 1);
 
-    let chosenPool: any[] = poolQuestions;
-    const targetRandomCount = exam.random_question_count || 0;
+      let chosenPool: any[] = poolQuestions;
+      const targetRandomCount = Number(exam.random_question_count || 0);
 
-    if (targetRandomCount > 0 && targetRandomCount > mandatoryQuestions.length && poolQuestions.length > 0) {
-      const neededFromPool = targetRandomCount - mandatoryQuestions.length;
-      // Shuffle pool
-      const shuffled = [...poolQuestions].sort(() => Math.random() - 0.5);
-      chosenPool = shuffled.slice(0, neededFromPool);
-    }
+      if (targetRandomCount > 0 && targetRandomCount > mandatoryQuestions.length && poolQuestions.length > 0) {
+        const neededFromPool = targetRandomCount - mandatoryQuestions.length;
+        const shuffled = [...poolQuestions].sort(() => Math.random() - 0.5);
+        chosenPool = shuffled.slice(0, neededFromPool);
+      }
 
-    let finalQuestions = [...mandatoryQuestions, ...chosenPool];
-    if (exam.shuffle_questions) {
-      finalQuestions = finalQuestions.sort(() => Math.random() - 0.5);
-    }
+      let finalQuestions = [...mandatoryQuestions, ...chosenPool];
+      if (exam.shuffle_questions) {
+        finalQuestions = finalQuestions.sort(() => Math.random() - 0.5);
+      }
 
-    const insertAttemptQ = db.prepare(`
-      INSERT OR IGNORE INTO attempt_questions (id, attempt_id, question_id, order_index, is_mandatory)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-
-    finalQuestions.forEach((q, idx) => {
-      insertAttemptQ.run(`attq_${attemptId}_${idx}`, attemptId, q.question_id, idx + 1, q.is_mandatory);
+      for (let idx = 0; idx < finalQuestions.length; idx++) {
+        const q = finalQuestions[idx];
+        await tx.execute(`
+          INSERT INTO attempt_questions (id, attempt_id, question_id, order_index, is_mandatory)
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (attempt_id, question_id) DO NOTHING
+        `, [`attq_${attemptId}_${idx}`, attemptId, q.question_id, idx + 1, q.is_mandatory]);
+      }
     });
 
     return NextResponse.json({

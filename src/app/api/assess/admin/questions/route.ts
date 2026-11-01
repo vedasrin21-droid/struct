@@ -17,33 +17,35 @@ export async function GET(request: Request) {
     const params: any[] = [];
 
     if (category) {
-      query += ' AND category = ?';
       params.push(category);
+      query += ` AND category = $${params.length}`;
     }
     if (difficulty) {
-      query += ' AND difficulty = ?';
       params.push(difficulty);
+      query += ` AND difficulty = $${params.length}`;
     }
     if (search) {
-      query += ' AND (text LIKE ? OR category LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      params.push(`%${search}%`);
+      const p1 = params.length;
+      params.push(`%${search}%`);
+      const p2 = params.length;
+      query += ` AND (text ILIKE $${p1} OR category ILIKE $${p2})`;
     }
 
     query += ' ORDER BY created_at DESC';
 
-    const rawQuestions = db.prepare(query).all(...params) as any[];
-
-    const questions = rawQuestions.map(q => ({
+    const rawResult = await db.query<any>(query, params);
+    const questions = rawResult.rows.map(q => ({
       ...q,
       options: JSON.parse(q.options_json),
     }));
 
     // Categories list for filter dropdown
-    const categories = db.prepare('SELECT DISTINCT category FROM questions ORDER BY category ASC').all() as any[];
+    const catResult = await db.query<any>('SELECT DISTINCT category FROM questions ORDER BY category ASC');
 
     return NextResponse.json({
       questions,
-      categories: categories.map(c => c.category),
+      categories: catResult.rows.map(c => c.category),
     });
   } catch (error: any) {
     if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN_ADMIN_REQUIRED') {
@@ -71,12 +73,12 @@ export async function POST(request: Request) {
     const qId = 'q_' + crypto.randomUUID().slice(0, 8);
     const now = Date.now();
 
-    db.prepare(`
+    await db.execute(`
       INSERT INTO questions (
         id, text, category, difficulty, marks, negative_marks, explanation,
         options_json, correct_option_index, is_mandatory, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `, [
       qId,
       text.trim(),
       category.trim(),
@@ -88,13 +90,12 @@ export async function POST(request: Request) {
       Number(correctOptionIndex),
       isMandatory ? 1 : 0,
       now
-    );
+    ]);
 
-    // Audit log
-    db.prepare(`
+    await db.execute(`
       INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, created_at)
-      VALUES (?, ?, 'create_question', 'question', ?, ?, ?)
-    `).run('aud_' + crypto.randomUUID().slice(0, 8), admin.id, qId, `Created question in ${category}`, now);
+      VALUES ($1, $2, 'create_question', 'question', $3, $4, $5)
+    `, ['aud_' + crypto.randomUUID().slice(0, 8), admin.id, qId, `Created question in ${category}`, now]);
 
     return NextResponse.json({
       success: true,
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
     if (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN_ADMIN_REQUIRED') {
       return NextResponse.json({ error: 'Administrator access required' }, { status: 403 });
     }
-    return NextResponse.json({ error: 'Failed to create question' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to create question' }, { status: 500 });
   }
 }
 
@@ -131,13 +132,13 @@ export async function DELETE(request: Request) {
     const db = getDb();
 
     // Check if question is used in any published or in-progress exam
-    const activeUsage = db.prepare(`
+    const activeUsage = await db.queryOne<any>(`
       SELECT e.title 
       FROM exam_questions eq
       JOIN exams e ON e.id = eq.exam_id
-      WHERE eq.question_id = ? AND e.status = 'published'
+      WHERE eq.question_id = $1 AND e.status = 'published'
       LIMIT 1
-    `).get(id) as any;
+    `, [id]);
 
     if (activeUsage) {
       return NextResponse.json({
@@ -145,12 +146,12 @@ export async function DELETE(request: Request) {
       }, { status: 409 });
     }
 
-    db.prepare('DELETE FROM questions WHERE id = ?').run(id);
+    await db.execute('DELETE FROM questions WHERE id = $1', [id]);
 
-    db.prepare(`
+    await db.execute(`
       INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, created_at)
-      VALUES (?, ?, 'delete_question', 'question', ?, 'Deleted question', ?)
-    `).run('aud_' + crypto.randomUUID().slice(0, 8), admin.id, id, Date.now());
+      VALUES ($1, $2, 'delete_question', 'question', $3, 'Deleted question', $4)
+    `, ['aud_' + crypto.randomUUID().slice(0, 8), admin.id, id, Date.now()]);
 
     return NextResponse.json({ success: true, message: 'Question deleted successfully' });
   } catch (error: any) {

@@ -91,17 +91,19 @@ export default function AssessHubPage() {
   };
 
   const fillDemoCandidate = () => {
+    if (process.env.NODE_ENV === 'production') return;
     setRole('candidate');
     setIsRegisterAdmin(false);
-    setEmail('candidate@talvyn.com');
+    setEmail('candidate@struct.careers');
     setPassword('CandidatePass123!');
     setError(null);
   };
 
   const fillDemoAdmin = () => {
+    if (process.env.NODE_ENV === 'production') return;
     setRole('admin');
     setIsRegisterAdmin(false);
-    setEmail('admin@talvyn.com');
+    setEmail('admin@struct.careers');
     setPassword('TalvynAdmin2026!');
     setError(null);
   };
@@ -143,9 +145,12 @@ export default function AssessHubPage() {
             </Link>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link href="/" style={{ fontSize: '0.9rem', color: '#475569', textDecoration: 'none', fontWeight: 600 }}>
-              &larr; Back to Resume Tools
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Link href="/portal" style={{ fontSize: '0.88rem', color: '#0284c7', textDecoration: 'none', fontWeight: 700 }}>
+              AI Interviews &amp; Plans &rarr;
+            </Link>
+            <Link href="/" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 600 }}>
+              &larr; Platform Home
             </Link>
           </div>
         </div>
@@ -315,7 +320,7 @@ export default function AssessHubPage() {
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="admin@talvyn.com"
+                    placeholder="admin@company.com"
                     style={{
                       width: '100%',
                       padding: '10px 14px',
@@ -357,7 +362,7 @@ export default function AssessHubPage() {
                     required
                     value={setupCode}
                     onChange={e => setSetupCode(e.target.value)}
-                    placeholder="Talvyn@Assess2026!"
+                    placeholder="Enter setup authorization code"
                     style={{
                       width: '100%',
                       padding: '10px 14px',
@@ -368,7 +373,7 @@ export default function AssessHubPage() {
                     }}
                   />
                   <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '4px' }}>
-                    Default setup code: <code>Talvyn@Assess2026!</code>
+                    Authorization code provided by your organization or platform administrator.
                   </div>
                 </div>
 
@@ -417,7 +422,7 @@ export default function AssessHubPage() {
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder={role === 'admin' ? 'admin@talvyn.com' : 'candidate@talvyn.com'}
+                    placeholder={role === 'admin' ? 'admin@company.com' : 'candidate@institution.edu'}
                     style={{
                       width: '100%',
                       padding: '10px 14px',
@@ -491,52 +496,54 @@ export default function AssessHubPage() {
               </form>
             )}
 
-            {/* Quick Demo Fill Buttons */}
-            <div style={{
-              marginTop: '28px',
-              paddingTop: '20px',
-              borderTop: '1px dashed #E2E8F0',
-            }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-                Instant Local Testing Credentials
+            {/* Quick Demo Fill Buttons - Disabled in production */}
+            {process.env.NODE_ENV !== 'production' && (
+              <div style={{
+                marginTop: '28px',
+                paddingTop: '20px',
+                borderTop: '1px dashed #E2E8F0',
+              }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+                  Local Testing Autofill (Non-Production Only)
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={fillDemoCandidate}
+                    style={{
+                      flex: 1,
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #BAE6FD',
+                      background: '#F0F9FF',
+                      color: '#0369A1',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Fill Demo Candidate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={fillDemoAdmin}
+                    style={{
+                      flex: 1,
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      background: '#F8FAFC',
+                      color: '#0F172A',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Fill Demo Admin
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={fillDemoCandidate}
-                  style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #BAE6FD',
-                    background: '#F0F9FF',
-                    color: '#0369A1',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Fill Demo Candidate
-                </button>
-                <button
-                  type="button"
-                  onClick={fillDemoAdmin}
-                  style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #CBD5E1',
-                    background: '#F8FAFC',
-                    color: '#0F172A',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Fill Demo Admin
-                </button>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Value Props & Information Cards */}
