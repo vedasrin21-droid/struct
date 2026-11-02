@@ -24,6 +24,8 @@ if (hasClerkKeys) {
     '/api/webhooks(.*)',
     '/api/plans(.*)',
     '/api/promos/validate(.*)',
+    '/api/payments/(.*)',
+    '/api/entitlements/(.*)',
     '/sign-in(.*)',
     '/sign-up(.*)',
   ]);
