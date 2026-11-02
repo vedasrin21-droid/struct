@@ -37,14 +37,12 @@ export default function SignInClient() {
         throw new Error(data.error || 'Authentication failed. Please verify your credentials.');
       }
 
-      // Store identity in localStorage for consistent client session state
       if (typeof window !== 'undefined') {
         localStorage.setItem('struct_user_email', data.user.email);
         localStorage.setItem('struct_user_name', data.user.name || '');
         localStorage.setItem('struct_user_role', data.user.role || 'candidate');
       }
 
-      // Route based on role
       if (data.user.role === 'admin' || data.user.role === 'super_admin') {
         router.push('/assess/admin');
       } else {
@@ -67,56 +65,91 @@ export default function SignInClient() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#F7F8FC',
+      background: 'radial-gradient(circle at 50% 12%, rgba(2, 132, 199, 0.05) 0%, transparent 60%), #F8FAFD',
       display: 'flex',
       flexDirection: 'column',
-      color: '#182238',
-      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      color: '#0F172A',
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
     }}>
-      {/* Top Navbar */}
+      {/* Sticky Top Navbar */}
       <header style={{
-        background: 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid #E5E8EF',
-        padding: '16px 24px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
+        height: '66px',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 28px',
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '1280px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          {/* Brand Logo & Name matching Home page */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #243B73 0%, #17264A 100%)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '9px',
+              background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#FFFFFF',
               fontWeight: 800,
-              fontSize: '1.25rem',
-              boxShadow: '0 4px 12px rgba(36, 59, 115, 0.25)'
+              fontSize: '1.15rem',
+              letterSpacing: '-0.5px',
+              boxShadow: '0 4px 10px rgba(10, 27, 56, 0.15)',
+              flexShrink: 0,
             }}>
               S
             </div>
-            <div>
-              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#17264A', letterSpacing: '-0.5px' }}>STRUCT</span>
-              <span style={{ fontSize: '0.72rem', color: '#6B7280', display: 'block', marginTop: '-2px', fontWeight: 600 }}>CAREER PLATFORM</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{
+                fontFamily: "'Space Grotesk', -apple-system, sans-serif",
+                fontSize: '1.25rem',
+                fontWeight: 800,
+                letterSpacing: '-0.5px',
+                color: '#0A1B38',
+                lineHeight: 1.1,
+              }}>
+                STRUCT
+              </span>
+              <span style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                letterSpacing: '0.8px',
+                textTransform: 'uppercase',
+                color: '#0284C7',
+              }}>
+                Assessments &amp; Hiring Platform
+              </span>
             </div>
           </Link>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontSize: '0.88rem', color: '#6B7280' }}>Don&apos;t have an account?</span>
+          {/* Right Action */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <span style={{ fontSize: '0.88rem', color: '#64748B' }}>New to STRUCT?</span>
             <Link
               href="/sign-up"
               style={{
                 fontSize: '0.88rem',
                 fontWeight: 700,
-                color: '#243B73',
+                color: '#0A1B38',
                 textDecoration: 'none',
                 padding: '8px 16px',
                 borderRadius: '8px',
-                border: '1px solid #E5E8EF',
+                border: '1px solid rgba(15, 23, 42, 0.12)',
                 background: '#FFFFFF',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                transition: 'all 0.15s ease'
               }}
             >
               Sign Up &rarr;
@@ -125,89 +158,98 @@ export default function SignInClient() {
         </div>
       </header>
 
-      {/* Main Login Card */}
+      {/* Main Login Workspace */}
       <main style={{
         flex: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '40px 20px',
+        padding: '50px 20px',
       }}>
         <div style={{
           width: '100%',
-          maxWidth: '440px',
+          maxWidth: '430px',
           background: '#FFFFFF',
-          borderRadius: '18px',
-          border: '1px solid #E5E8EF',
-          boxShadow: '0 16px 40px rgba(23, 38, 74, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)',
-          padding: '36px 32px',
+          borderRadius: '16px',
+          border: '1px solid rgba(15, 23, 42, 0.08)',
+          boxShadow: '0 20px 48px -12px rgba(10, 27, 56, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
+          padding: '40px 36px',
         }}>
-          {/* Card Header */}
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <div style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '12px',
-              background: '#F0F4FC',
-              color: '#243B73',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 14px',
-              fontSize: '1.3rem',
-              fontWeight: 800
+          {/* Card Header without emojis */}
+          <div style={{ textAlign: 'left', marginBottom: '28px' }}>
+            <span style={{
+              display: 'inline-block',
+              fontSize: '0.68rem',
+              fontWeight: 800,
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              color: '#0284C7',
+              marginBottom: '8px'
             }}>
-              ⚡
-            </div>
-            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#17264A', margin: 0 }}>
+              Identity &amp; Assessment Access
+            </span>
+            <h1 style={{
+              fontFamily: "'Space Grotesk', -apple-system, sans-serif",
+              fontSize: '1.65rem',
+              fontWeight: 800,
+              color: '#0A1B38',
+              letterSpacing: '-0.8px',
+              margin: '0 0 6px',
+              lineHeight: 1.2
+            }}>
               Sign In to STRUCT
             </h1>
-            <p style={{ fontSize: '0.88rem', color: '#6B7280', marginTop: '6px', marginBottom: 0 }}>
-              Build your resume, test your skills, and track assessments.
+            <p style={{
+              fontSize: '0.9rem',
+              color: '#64748B',
+              lineHeight: 1.5,
+              margin: 0
+            }}>
+              Access your resume builder, skill evaluations, and assessment credentials.
             </p>
           </div>
 
-          {/* Role Switcher Tabs */}
+          {/* Role Switcher Tabs (Segmented Control) */}
           <div style={{
             display: 'flex',
-            background: '#F7F8FC',
+            background: '#F1F5F9',
             borderRadius: '10px',
             padding: '4px',
-            marginBottom: '20px',
-            border: '1px solid #E5E8EF'
+            marginBottom: '22px',
+            border: '1px solid #E2E8F0'
           }}>
             <button
               type="button"
               onClick={() => { setRoleTab('candidate'); setError(null); }}
               style={{
                 flex: 1,
-                padding: '8px 12px',
+                padding: '9px 12px',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '0.85rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 background: roleTab === 'candidate' ? '#FFFFFF' : 'transparent',
-                color: roleTab === 'candidate' ? '#243B73' : '#6B7280',
+                color: roleTab === 'candidate' ? '#0A1B38' : '#64748B',
                 boxShadow: roleTab === 'candidate' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
                 transition: 'all 0.15s ease'
               }}
             >
-              Student / Candidate
+              Candidate / Student
             </button>
             <button
               type="button"
               onClick={() => { setRoleTab('admin'); setError(null); }}
               style={{
                 flex: 1,
-                padding: '8px 12px',
+                padding: '9px 12px',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '0.85rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 background: roleTab === 'admin' ? '#FFFFFF' : 'transparent',
-                color: roleTab === 'admin' ? '#243B73' : '#6B7280',
+                color: roleTab === 'admin' ? '#0A1B38' : '#64748B',
                 boxShadow: roleTab === 'admin' ? '0 2px 6px rgba(0, 0, 0, 0.06)' : 'none',
                 transition: 'all 0.15s ease'
               }}
@@ -219,14 +261,14 @@ export default function SignInClient() {
           {/* Error Message */}
           {error && (
             <div style={{
-              background: '#FDF2F2',
-              border: '1px solid #F8B4B4',
-              color: '#9B1C1C',
+              background: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              color: '#991B1B',
               padding: '12px 14px',
-              borderRadius: '10px',
+              borderRadius: '8px',
               fontSize: '0.84rem',
               lineHeight: 1.45,
-              marginBottom: '18px'
+              marginBottom: '20px'
             }}>
               {error}
             </div>
@@ -235,7 +277,13 @@ export default function SignInClient() {
           {/* Sign In Form */}
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#17264A', marginBottom: '6px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                color: '#1E293B',
+                marginBottom: '6px'
+              }}>
                 Email Address
               </label>
               <input
@@ -248,9 +296,9 @@ export default function SignInClient() {
                   width: '100%',
                   padding: '11px 14px',
                   borderRadius: '10px',
-                  border: '1px solid #E5E8EF',
+                  border: '1px solid #CBD5E1',
                   fontSize: '0.92rem',
-                  color: '#182238',
+                  color: '#0F172A',
                   background: '#FFFFFF',
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -261,7 +309,11 @@ export default function SignInClient() {
 
             <div style={{ marginBottom: '22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#17264A' }}>
+                <label style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#1E293B'
+                }}>
                   Password
                 </label>
                 <button
@@ -270,9 +322,9 @@ export default function SignInClient() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#4566A8',
+                    color: '#0284C7',
                     fontSize: '0.78rem',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     padding: 0
                   }}
@@ -290,9 +342,9 @@ export default function SignInClient() {
                   width: '100%',
                   padding: '11px 14px',
                   borderRadius: '10px',
-                  border: '1px solid #E5E8EF',
+                  border: '1px solid #CBD5E1',
                   fontSize: '0.92rem',
-                  color: '#182238',
+                  color: '#0F172A',
                   background: '#FFFFFF',
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -309,13 +361,13 @@ export default function SignInClient() {
                 padding: '13px 20px',
                 borderRadius: '10px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #243B73 0%, #17264A 100%)',
+                background: 'linear-gradient(135deg, #0A1B38 0%, #12336B 100%)',
                 color: '#FFFFFF',
                 fontSize: '0.95rem',
                 fontWeight: 700,
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.8 : 1,
-                boxShadow: '0 4px 14px rgba(36, 59, 115, 0.3)',
+                boxShadow: '0 4px 14px rgba(10, 27, 56, 0.25)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -334,7 +386,7 @@ export default function SignInClient() {
                     borderRadius: '50%',
                     animation: 'spin 0.8s linear infinite'
                   }} />
-                  Signing In...
+                  Authenticating...
                 </>
               ) : (
                 `Sign In as ${roleTab === 'admin' ? 'Administrator' : 'Student'} \u2192`
@@ -342,48 +394,48 @@ export default function SignInClient() {
             </button>
           </form>
 
-          {/* Quick Demo Helper */}
+          {/* Quick Demo Credentials Footer */}
           <div style={{
-            marginTop: '24px',
-            paddingTop: '18px',
-            borderTop: '1px solid #E5E8EF',
-            fontSize: '0.78rem',
-            color: '#6B7280',
+            marginTop: '28px',
+            paddingTop: '20px',
+            borderTop: '1px solid #E2E8F0',
+            fontSize: '0.8rem',
+            color: '#64748B',
             textAlign: 'center'
           }}>
-            <p style={{ margin: '0 0 10px', fontWeight: 600 }}>Quick Demo Fill:</p>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+            <p style={{ margin: '0 0 10px', fontWeight: 600 }}>Quick Verification Accounts:</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
                 type="button"
                 onClick={() => fillDemo('candidate@talvyn.com', 'CandidatePass123!', 'candidate')}
                 style={{
-                  background: '#F0F4FC',
-                  border: '1px solid #D5E1F7',
-                  color: '#243B73',
+                  background: '#F8FAFC',
+                  border: '1px solid #CBD5E1',
+                  color: '#0A1B38',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  fontSize: '0.75rem',
+                  fontSize: '0.78rem',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
-                Demo Candidate
+                Candidate Demo
               </button>
               <button
                 type="button"
                 onClick={() => fillDemo('admin@talvyn.com', 'TalvynAdmin2026!', 'admin')}
                 style={{
-                  background: '#F0F4FC',
-                  border: '1px solid #D5E1F7',
-                  color: '#243B73',
+                  background: '#F8FAFC',
+                  border: '1px solid #CBD5E1',
+                  color: '#0A1B38',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  fontSize: '0.75rem',
+                  fontSize: '0.78rem',
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
-                Demo Admin
+                Admin Demo
               </button>
             </div>
           </div>
