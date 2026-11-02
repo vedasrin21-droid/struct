@@ -9,7 +9,7 @@ export function PricingSection() {
   const [checkoutMsg, setCheckoutMsg] = useState<string | null>(null);
   const [checkoutErr, setCheckoutErr] = useState<string | null>(null);
 
-  const handleBuyPremium = async () => {
+  const handleBuyResumePack = async () => {
     setCheckoutErr(null);
     setCheckoutMsg(null);
     setCheckoutLoading(true);
@@ -72,7 +72,7 @@ export function PricingSection() {
             if (!verifyRes.ok || !verifyData.success) {
               throw new Error(verifyData.error || 'Payment verification failed.');
             }
-            setCheckoutMsg('Payment successful! Your Premium Resume AI & Detailed ATS credits are active.');
+            setCheckoutMsg('Payment successful! Your Resume AI & Detailed ATS credits are now active.');
             if (typeof window !== 'undefined') {
               window.location.href = '/portal?payment=success';
             }
@@ -102,7 +102,7 @@ export function PricingSection() {
       }}
     >
       <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-        {/* Section Header */}
+        {/* Section Header: MAIN FOCUS ON ASSESSMENTS */}
         <div style={{ textAlign: 'center', marginBottom: '56px' }}>
           <span
             style={{
@@ -115,7 +115,7 @@ export function PricingSection() {
               marginBottom: '10px',
             }}
           >
-            Clear &amp; Transparent Student Pricing
+            STRUCT Assess — Examination &amp; Mock Testing Plans
           </span>
           <h2
             style={{
@@ -127,18 +127,18 @@ export function PricingSection() {
               margin: '0 0 16px',
             }}
           >
-            Everything You Need to Get Hired
+            Practice, Benchmark &amp; Prove Your Technical Skills
           </h2>
           <p
             style={{
               fontSize: '1.05rem',
               color: '#64748B',
-              maxWidth: '620px',
+              maxWidth: '640px',
               margin: '0 auto',
               lineHeight: 1.6,
             }}
           >
-            Start 100% free with the complete resume builder and examination portal. Upgrade once for deep AI rewriting and in-depth ATS diagnostic.
+            Take official campus recruitment drives, test yourself against standardized mock benchmarks, and get instant server-side scoring.
           </p>
         </div>
 
@@ -154,16 +154,17 @@ export function PricingSection() {
           </div>
         )}
 
-        {/* 2-Card Single Source of Truth Pricing Matrix */}
+        {/* PRIMARY ASSESSMENT PRICING CARDS */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
             gap: '32px',
             alignItems: 'stretch',
+            marginBottom: '48px',
           }}
         >
-          {/* Plan A: STRUCT Free */}
+          {/* Card 1: STRUCT Assess Student Free */}
           <div
             style={{
               background: '#FFFFFF',
@@ -178,7 +179,7 @@ export function PricingSection() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.6px', textTransform: 'uppercase', color: '#64748B' }}>
-                Plan A
+                Student Access
               </span>
               <span style={{ background: '#F1F5F9', color: '#475569', fontSize: '0.74rem', fontWeight: 700, padding: '3px 10px', borderRadius: '6px' }}>
                 Free Forever
@@ -186,46 +187,42 @@ export function PricingSection() {
             </div>
 
             <h3 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0A1B38', margin: '0 0 8px', letterSpacing: '-0.5px' }}>
-              STRUCT Free
+              Assess Free
             </h3>
             <p style={{ fontSize: '0.92rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 24px' }}>
-              Essential career foundation for every student. Build a resume, take exams, and understand your initial ATS standing.
+              Essential examination portal access for college drives, campus recruitment, and starter mock technical testing.
             </p>
 
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '28px' }}>
               <span style={{ fontSize: '3rem', fontWeight: 800, color: '#0A1B38', letterSpacing: '-1.5px' }}>₹0</span>
-              <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#64748B' }}>/ free forever</span>
+              <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#64748B' }}>/ free for students</span>
             </div>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#1E293B', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Full Resume Builder:</strong> Enter education, experience, projects, skills &amp; certs</span>
+                <span><strong>Institutional Examinations:</strong> Participate in official college, club &amp; company exam drives</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#1E293B', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Professional Template:</strong> Clean formatting optimized for recruiters &amp; scanners</span>
+                <span><strong>Public Mock Assessments:</strong> Practice standardized technical benchmarks with real timers</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#1E293B', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Instant PDF Export:</strong> Pristine vector resume download with zero blank pages</span>
+                <span><strong>Server-Side Auto Grading:</strong> Automated evaluation with positive &amp; negative marking</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#1E293B', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Basic ATS Checker:</strong> Resume structure evaluation &amp; initial score</span>
+                <span><strong>Verification Receipt:</strong> Cryptographic timestamped submission code for records</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#1E293B', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>STRUCT Assess:</strong> Eligibility and participation in college &amp; company exams</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#1E293B', lineHeight: 1.45 }}>
-                <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>User Dashboard:</strong> Profile history and exam submissions</span>
+                <span><strong>Candidate Dashboard:</strong> Review past exam participation and released scores</span>
               </li>
             </ul>
 
             <Link
-              href="/resume-builder"
+              href="/assess"
               style={{
                 width: '100%',
                 padding: '14px 20px',
@@ -242,11 +239,11 @@ export function PricingSection() {
                 transition: 'all 0.15s ease',
               }}
             >
-              Build My Free Resume &rarr;
+              Start Free Assessment &rarr;
             </Link>
           </div>
 
-          {/* Plan B: STRUCT Premium Resume Package */}
+          {/* Card 2: STRUCT Assess Pro Pass */}
           <div
             style={{
               background: '#FFFFFF',
@@ -277,61 +274,55 @@ export function PricingSection() {
                 boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
               }}
             >
-              Recommended • One-Time Upgrade
+              Recommended • Full Mock Prep
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.6px', textTransform: 'uppercase', color: '#0284C7' }}>
-                Plan B
+                Mock Exam Pass
               </span>
               <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.74rem', fontWeight: 700, padding: '3px 10px', borderRadius: '6px' }}>
-                One-Time Payment
+                Comprehensive Training
               </span>
             </div>
 
             <h3 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0A1B38', margin: '0 0 8px', letterSpacing: '-0.5px' }}>
-              STRUCT Premium Resume Package
+              Assess Pro Pass
             </h3>
             <p style={{ fontSize: '0.92rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 24px' }}>
-              Resume AI Enhancement + Detailed ATS Analysis. High-value upgrade for students aiming for top campus placements.
+              Extensive technical mock preparation for campus drives with full anti-cheat simulation and question rationales.
             </p>
 
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '28px' }}>
-              <span style={{ fontSize: '3rem', fontWeight: 800, color: '#0A1B38', letterSpacing: '-1.5px' }}>₹49</span>
-              <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#64748B' }}>one-time (no recurring fees)</span>
+              <span style={{ fontSize: '3rem', fontWeight: 800, color: '#0A1B38', letterSpacing: '-1.5px' }}>₹199</span>
+              <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#64748B' }}>one-time pass (no subscription)</span>
             </div>
 
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#0A1B38', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Everything in STRUCT Free</strong> included</span>
+                <span><strong>Unlimited Mock Assessments:</strong> Full access to Full Stack, DSA, Frontend, &amp; CS Fundamentals</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#0A1B38', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>AI Resume Enhancement:</strong> Google X-Y-Z bullet rewrites, metric framing &amp; strong action verbs</span>
+                <span><strong>Full Anti-Cheat Simulation:</strong> Tab-switch tracking, fullscreen guard, and telemetry audit</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#0A1B38', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Detailed ATS Breakdown:</strong> Section scores for Education, Experience, Skills &amp; Formatting</span>
+                <span><strong>Comprehensive Solution Reviews:</strong> Question-by-question explanations and engineering rationales</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#0A1B38', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Keyword Gap Analysis:</strong> Match missing terms against target company job descriptions</span>
+                <span><strong>Skill Gap &amp; Benchmark Report:</strong> Identify topic strengths, category percentiles, and speed telemetry</span>
               </li>
               <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#0A1B38', lineHeight: 1.45 }}>
                 <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>Readability &amp; Format Guard:</strong> Detect parser-breaking fonts, symbols &amp; column errors</span>
-              </li>
-              <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.92rem', color: '#0A1B38', lineHeight: 1.45 }}>
-                <span style={{ color: '#0284C7', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>✓</span>
-                <span><strong>2 Complete Usages:</strong> Polish multiple target roles or re-scan after updates</span>
+                <span><strong>Verified Candidate Credential:</strong> Shareable assessment certificate to include in job applications</span>
               </li>
             </ul>
 
-            <button
-              type="button"
-              disabled={checkoutLoading}
-              onClick={handleBuyPremium}
+            <Link
+              href="/assess"
               style={{
                 width: '100%',
                 padding: '14px 20px',
@@ -342,20 +333,93 @@ export function PricingSection() {
                 fontSize: '0.98rem',
                 fontWeight: 800,
                 textAlign: 'center',
-                cursor: checkoutLoading ? 'not-allowed' : 'pointer',
-                opacity: checkoutLoading ? 0.8 : 1,
+                textDecoration: 'none',
                 boxShadow: '0 4px 16px rgba(2, 132, 199, 0.35)',
+                display: 'block',
                 transition: 'all 0.15s ease',
               }}
             >
-              {checkoutLoading ? 'Connecting to Payment Gateway...' : 'Upgrade to Premium — ₹49 (One-Time) →'}
-            </button>
+              Get Assess Pro Pass &rarr;
+            </Link>
+          </div>
+        </div>
+
+        {/* DISTINCT SEPARATE SECTION: RESUME BUILDER & AI POLISH ADD-ON */}
+        <div
+          style={{
+            background: '#FFFFFF',
+            borderRadius: '20px',
+            border: '1.5px solid #E2E8F0',
+            padding: '36px 32px',
+            boxShadow: '0 10px 30px rgba(10, 27, 56, 0.05)',
+            position: 'relative',
+          }}
+        >
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '24px' }}>
+            <div style={{ maxWidth: '640px' }}>
+              <div style={{ display: 'inline-flex', padding: '4px 10px', background: '#F1F5F9', borderRadius: '6px', color: '#475569', fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '10px' }}>
+                Separate Career Tool &bull; Resume Builder &amp; AI Polish
+              </div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0A1B38', margin: '0 0 8px' }}>
+                STRUCT Resume Builder &amp; AI ATS Polish (₹49 Add-On)
+              </h3>
+              <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: 1.6, margin: '0 0 16px' }}>
+                Our ATS Resume Builder is completely free to use with live previews and clean PDF exports. If you need deep AI bullet point rewrites and section-by-section ATS diagnostic, grab the optional one-time add-on.
+              </p>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '0.86rem', color: '#334155' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ color: '#0284C7' }}>✓</strong> Free ATS Resume Creator &amp; Vector PDF
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ color: '#0284C7' }}>✓</strong> Optional AI Rewrite &amp; ATS Scan (₹49 One-Time)
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ color: '#0284C7' }}>✓</strong> Google X-Y-Z formula bullet polish
+                </span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                type="button"
+                disabled={checkoutLoading}
+                onClick={handleBuyResumePack}
+                style={{
+                  background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px 22px',
+                  borderRadius: '10px',
+                  fontSize: '0.92rem',
+                  fontWeight: 800,
+                  cursor: checkoutLoading ? 'not-allowed' : 'pointer',
+                  opacity: checkoutLoading ? 0.8 : 1,
+                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)',
+                }}
+              >
+                {checkoutLoading ? 'Connecting...' : 'Get Resume AI Pack — ₹49 →'}
+              </button>
+
+              <Link
+                href="/resume-builder"
+                style={{
+                  fontSize: '0.85rem',
+                  color: '#0284C7',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  padding: '6px',
+                }}
+              >
+                Open Free Resume Builder &rarr;
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Reassurance Footer */}
         <div style={{ textAlign: 'center', marginTop: '36px', color: '#64748B', fontSize: '0.86rem' }}>
-          <span>🔒 Secured via Razorpay (UPI, Google Pay, PhonePe, Cards, NetBanking). Instant activation.</span>
+          <span>🔒 Secured via Razorpay (UPI, Google Pay, PhonePe, Cards, NetBanking). Instant access.</span>
         </div>
       </div>
     </section>

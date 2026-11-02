@@ -174,28 +174,46 @@ export default function IndividualPortal() {
           <div style={{ background: '#FFFFFF', border: '2px solid #0284C7', borderRadius: 14, padding: 24, boxShadow: '0 4px 16px rgba(2, 132, 199, 0.08)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: '#0284C7', textTransform: 'uppercase' }}>STRUCT ASSESS</span>
-              <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>Live Proctored</span>
+              <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>Exams &amp; Mocks</span>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px', color: '#0A1B38' }}>Technical Examinations</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px', color: '#0A1B38' }}>Mock Benchmarks &amp; Exams</h3>
             <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.5, margin: '0 0 18px', flex: 1 }}>
-              Official college drives, anti-cheat monitored examinations, timed MCQs, and full answer submission tracking.
+              Take standardized mock tests (Full-Stack, DSA, React) or log in for official college drives under central anti-cheat proctoring.
             </p>
-            <Link
-              href="/assess"
-              style={{
-                display: 'inline-block',
-                background: '#0284C7',
-                color: '#FFFFFF',
-                padding: '10px 18px',
-                borderRadius: 8,
-                fontSize: 14,
-                fontWeight: 700,
-                textDecoration: 'none',
-                textAlign: 'center'
-              }}
-            >
-              Enter Exam Portal &rarr;
-            </Link>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Link
+                href="/assess/candidate?tab=practice"
+                style={{
+                  display: 'inline-block',
+                  background: '#0284C7',
+                  color: '#FFFFFF',
+                  padding: '10px 18px',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  textAlign: 'center'
+                }}
+              >
+                Take Mock Assessments &rarr;
+              </Link>
+              <Link
+                href="/assess"
+                style={{
+                  display: 'inline-block',
+                  background: '#F1F5F9',
+                  color: '#334155',
+                  padding: '8px 18px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  textAlign: 'center'
+                }}
+              >
+                College Drive Exam Login &rarr;
+              </Link>
+            </div>
           </div>
 
           {/* Card 2: Resume Builder */}

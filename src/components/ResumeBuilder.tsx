@@ -86,7 +86,7 @@ export function ResumeBuilder({
                 <style>
                   @page {
                     size: A4 portrait;
-                    margin: 12mm 14mm;
+                    margin: 0 !important;
                   }
                   html, body {
                     background: #FFFFFF !important;
@@ -105,10 +105,11 @@ export function ResumeBuilder({
                     box-shadow: none !important;
                     border: none !important;
                     border-radius: 0 !important;
-                    padding: 0 !important;
-                    margin: 0 !important;
+                    padding: 16mm 18mm !important;
+                    margin: 0 auto !important;
                     width: 100% !important;
-                    max-width: 100% !important;
+                    max-width: 210mm !important;
+                    box-sizing: border-box !important;
                     font-size: 10pt !important;
                     line-height: 1.45 !important;
                   }
@@ -2238,7 +2239,7 @@ export function ResumeBuilder({
 
           @page {
             size: portrait;
-            margin: 0.5in;
+            margin: 0 !important;
           }
         }
 

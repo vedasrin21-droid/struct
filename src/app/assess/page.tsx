@@ -7,11 +7,8 @@ import Link from 'next/link';
 export default function AssessHubPage() {
   const router = useRouter();
   const [role, setRole] = useState<'candidate' | 'admin'>('candidate');
-  const [isRegisterAdmin, setIsRegisterAdmin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [setupCode, setSetupCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -22,7 +19,7 @@ export default function AssessHubPage() {
       .then(res => res.json())
       .then(data => {
         if (data.authenticated && data.user) {
-          if (data.user.role === 'admin') {
+          if (data.user.role === 'admin' || data.user.role === 'super_admin') {
             router.push('/assess/admin');
           } else {
             router.push('/assess/candidate');
@@ -50,7 +47,7 @@ export default function AssessHubPage() {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      if (data.user.role === 'admin') {
+      if (data.user.role === 'admin' || data.user.role === 'super_admin') {
         router.push('/assess/admin');
       } else {
         router.push('/assess/candidate');
@@ -62,38 +59,9 @@ export default function AssessHubPage() {
     }
   };
 
-  const handleRegisterAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccessMsg(null);
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/assess/auth/register-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, setupCode }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      setSuccessMsg('Administrator account registered! Please log in.');
-      setIsRegisterAdmin(false);
-      setPassword('');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fillDemoCandidate = () => {
     if (process.env.NODE_ENV === 'production') return;
     setRole('candidate');
-    setIsRegisterAdmin(false);
     setEmail('candidate@struct.careers');
     setPassword('CandidatePass123!');
     setError(null);
@@ -102,7 +70,6 @@ export default function AssessHubPage() {
   const fillDemoAdmin = () => {
     if (process.env.NODE_ENV === 'production') return;
     setRole('admin');
-    setIsRegisterAdmin(false);
     setEmail('admin@struct.careers');
     setPassword('TalvynAdmin2026!');
     setError(null);
@@ -207,7 +174,7 @@ export default function AssessHubPage() {
             }}>
               <button
                 type="button"
-                onClick={() => { setRole('candidate'); setIsRegisterAdmin(false); setError(null); }}
+                onClick={() => { setRole('candidate'); setError(null); }}
                 style={{
                   flex: 1,
                   padding: '10px 14px',
@@ -247,14 +214,12 @@ export default function AssessHubPage() {
 
             {/* Title */}
             <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#0A1B38', marginBottom: '8px' }}>
-              {isRegisterAdmin ? 'Register Root Administrator' : role === 'admin' ? 'Administrator Authentication' : 'Candidate Assessment Access'}
+              {role === 'admin' ? 'Administrator Authentication' : 'Candidate Assessment Access'}
             </h2>
             <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '20px' }}>
-              {isRegisterAdmin
-                ? 'Enter your administration setup code to create an administrator profile.'
-                : role === 'admin'
-                ? 'Sign in to configure question banks, assign exams, and review proctoring logs.'
-                : 'Enter your assigned candidate credentials to access scheduled exams.'}
+              {role === 'admin'
+                ? 'Sign in with your authorized admin credentials to configure question banks, assign exams, and review proctoring logs.'
+                : 'Sign in to access your assigned college examinations and public mock assessments.'}
             </p>
 
             {/* Error & Success Messages */}
@@ -287,214 +252,91 @@ export default function AssessHubPage() {
               </div>
             )}
 
-            {/* Form */}
-            {isRegisterAdmin ? (
-              <form onSubmit={handleRegisterAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="e.g. Dr. Jane Smith"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    Admin Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="admin@company.com"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Minimum 8 characters"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    Setup Code
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={setupCode}
-                    onChange={e => setSetupCode(e.target.value)}
-                    placeholder="Enter setup authorization code"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  />
-                  <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '4px' }}>
-                    Authorization code provided by your organization or platform administrator.
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
+            {/* Login Form */}
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  {role === 'admin' ? 'Admin Email Address' : 'Candidate Email Address'}
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder={role === 'admin' ? 'admin@structonline.in' : 'student@institution.edu'}
                   style={{
-                    background: '#0A1B38',
-                    color: '#FFFFFF',
-                    border: 'none',
+                    width: '100%',
+                    padding: '10px 14px',
                     borderRadius: '8px',
-                    padding: '12px',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.7 : 1,
-                    marginTop: '8px'
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
                   }}
-                >
-                  {loading ? 'Registering...' : 'Create Admin Profile'}
-                </button>
+                />
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsRegisterAdmin(false)}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Enter your account password"
                   style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#0284C7',
-                    fontWeight: 600,
-                    fontSize: '0.85rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  &larr; Return to Admin Login
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    {role === 'admin' ? 'Admin Email Address' : 'Candidate Email Address'}
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder={role === 'admin' ? 'admin@company.com' : 'candidate@institution.edu'}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Enter account password"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    background: role === 'admin' ? '#0A1B38' : '#0284C7',
-                    color: '#FFFFFF',
-                    border: 'none',
+                    width: '100%',
+                    padding: '10px 14px',
                     borderRadius: '8px',
-                    padding: '12px',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.7 : 1,
-                    marginTop: '8px',
-                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)'
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
                   }}
-                >
-                  {loading ? 'Signing In...' : role === 'admin' ? 'Access Admin Console' : 'Access Candidate Portal'}
-                </button>
+                />
+              </div>
 
-                {role === 'admin' && (
-                  <div style={{ textAlign: 'center', marginTop: '4px' }}>
-                    <button
-                      type="button"
-                      onClick={() => { setIsRegisterAdmin(true); setError(null); }}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#0284C7',
-                        fontWeight: 600,
-                        fontSize: '0.82rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Need to register an admin account? Click here
-                    </button>
-                  </div>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  background: role === 'admin' ? 'linear-gradient(135deg, #0A1B38 0%, #17264A 100%)' : 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  marginTop: '8px',
+                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {loading ? 'Signing In...' : role === 'admin' ? 'Sign In to Admin Console \u2192' : 'Access Assessment Workspace \u2192'}
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '0.84rem', color: '#64748B' }}>
+                {role === 'admin' ? (
+                  <span>
+                    Need institution or recruiter credentials?{' '}
+                    <Link href="/sign-up" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
+                      Register Organization &rarr;
+                    </Link>
+                  </span>
+                ) : (
+                  <span>
+                    New student?{' '}
+                    <Link href="/sign-up" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
+                      Create free account &rarr;
+                    </Link>
+                  </span>
                 )}
-              </form>
-            )}
+              </div>
+            </form>
 
             {/* Quick Demo Fill Buttons - Disabled in production */}
             {process.env.NODE_ENV !== 'production' && (

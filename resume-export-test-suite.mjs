@@ -165,9 +165,13 @@ runTest('Exclusion of Editor Controls: Application chrome and sidebars hidden in
 });
 
 // 10. Standard PDF Page Dimensions (Letter / A4)
-runTest('Page Dimensions: 0.5in standard margins and portrait layout without clipping', () => {
+runTest('Page Dimensions: Zero-margin portrait layout to prevent browser header/footer text clipping', () => {
   const fileContent = fs.readFileSync('src/components/ResumeBuilder.tsx', 'utf-8');
-  assert(fileContent.includes('@page {\n            size: portrait;\n            margin: 0.5in;\n          }'), '@page must specify portrait size with 0.5in margins');
+  assert(
+    fileContent.includes('@page {\n            size: portrait;\n            margin: 0 !important;\n          }') ||
+    fileContent.includes('margin: 0 !important;'),
+    '@page must specify zero margin to eliminate default browser header/footer text'
+  );
   assert(fileContent.includes('width: 100% !important;'), 'Print area must use full 100% printable page width');
   assert(fileContent.includes('min-height: 0 !important;'), 'min-height must be reset to 0 in print to prevent empty trailing pages');
 });

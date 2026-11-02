@@ -56,13 +56,14 @@ export async function POST(request: Request) {
       [userId, normalizedEmail, hash, salt, cleanName, cleanDepartment, cleanCollege, now]
     );
 
-    // 5. Provision 1 starter practice assessment entitlement
+    // 5. Provision starter practice assessment entitlements
     try {
+      const entId = 'ent_' + crypto.randomUUID().slice(0, 12);
       await db.execute(
-        `INSERT INTO user_entitlements (user_id, feature_key, total_granted, used_count, remaining_balance, updated_at)
-         VALUES ($1, 'mock_assessment_attempt', 1, 0, 1, $2)
-         ON CONFLICT (user_id, feature_key) DO NOTHING`,
-        [userId, now]
+        `INSERT INTO user_entitlements (id, user_id, email, feature_type, total_granted, total_consumed, remaining_balance, updated_at)
+         VALUES ($1, $2, $3, 'mock_assessment_attempt', 3, 0, 3, $4)
+         ON CONFLICT (email, feature_type) DO NOTHING`,
+        [entId, userId, normalizedEmail, now]
       );
     } catch (e) {
       console.warn('[Registration Entitlement Warning]', e);

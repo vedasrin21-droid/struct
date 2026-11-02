@@ -120,6 +120,14 @@ export default function CandidateDashboardPage() {
   };
 
   useEffect(() => {
+    // Check URL tab query param
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'practice' || params.get('type') === 'mock') {
+        setActiveTab('practice');
+      }
+    }
+
     // 1. Check auth
     fetch('/api/assess/auth/me')
       .then(res => res.json())
