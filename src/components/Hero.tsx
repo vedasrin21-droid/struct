@@ -221,9 +221,9 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                         letterSpacing: '0.5px',
                       }}
                     >
-                      PRO
+                      PREMIUM
                     </span>
-                    <span>Plans from <strong>₹249</strong></span>
+                    <span>AI Resume Pack for <strong>₹49</strong></span>
                     <span style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>&rarr;</span>
                   </a>
 

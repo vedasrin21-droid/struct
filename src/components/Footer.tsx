@@ -81,8 +81,8 @@ export function Footer({ onOpenPrivacy, onOpenTerms, onOpenContact }: FooterProp
                 </a>
               </li>
               <li>
-                <a href="/portal" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
-                  AI Mock Interviews
+                <a href="/resume-builder" style={{ color: '#BAC7D5', textDecoration: 'none' }}>
+                  ATS Resume Builder
                 </a>
               </li>
               <li>

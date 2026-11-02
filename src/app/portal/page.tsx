@@ -4,22 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { loadRazorpayScript } from '@/lib/payments/clientCheckout';
 
-interface Plan {
-  id: string;
-  tierCode: string;
-  target: string;
-  name: string;
-  priceInr: number;
-  billingCycle: string;
-  limits: any;
-}
-
 export default function IndividualPortal() {
-  const [plans, setPlans] = useState<Plan[]>([]);
   const [credits, setCredits] = useState<number | null>(null);
-  const [emailInput, setEmailInput] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('struct_user_email') || '' : ''));
-  const [promoCode, setPromoCode] = useState('');
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutMsg, setCheckoutMsg] = useState<string | null>(null);
   const [checkoutErr, setCheckoutErr] = useState<string | null>(null);
@@ -36,240 +24,230 @@ export default function IndividualPortal() {
   };
 
   useEffect(() => {
-    // 1. Fetch individual plans
-    fetch('/api/plans?target=individual')
-      .then(r => r.json())
-      .then(d => {
-        if (d.success && d.plans) {
-          setPlans(d.plans);
-        }
-      })
-      .catch(() => {});
-
-    // 2. Fetch credits if email stored in localStorage
-    const savedEmail = typeof window !== 'undefined' ? localStorage.getItem('struct_user_email') : null;
-    if (savedEmail) {
-      fetchCredits(savedEmail);
+    if (typeof window !== 'undefined') {
+      const email = localStorage.getItem('struct_user_email') || 'candidate@structonline.in';
+      const name = localStorage.getItem('struct_user_name') || '';
+      setUserEmail(email);
+      setUserName(name);
+      fetchCredits(email);
     }
   }, []);
 
-  const handleSubscribe = async (plan: Plan) => {
-    setSelectedPlan(plan);
-    setCheckoutMsg(null);
+  const handleBuyPremium = async () => {
     setCheckoutErr(null);
+    setCheckoutMsg(null);
     setCheckoutLoading(true);
 
     try {
-      const email = emailInput.trim() || 'candidate@struct.careers';
-      localStorage.setItem('struct_user_email', email);
+      const email = userEmail.trim() || 'candidate@structonline.in';
 
-      const res = await fetch('/api/subscriptions/checkout', {
+      const res = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planTier: plan.tierCode,
-          promoCode: promoCode.trim() || undefined,
+          productId: 'resume_ai_pack_49',
+          userEmail: email,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to initiate plan checkout');
-
-      if (data.isFree) {
-        setCheckoutMsg(`Plan ${plan.name} activated successfully.`);
-        fetchCredits(email);
-        setCheckoutLoading(false);
-      } else {
-        setCheckoutMsg(`Launching Razorpay checkout for ₹${(data.amountPaise / 100).toFixed(0)}...`);
-        const scriptLoaded = await loadRazorpayScript();
-        if (!scriptLoaded || typeof window === 'undefined' || !(window as any).Razorpay) {
-          throw new Error('Unable to load payment gateway. Please check your internet connection and try again.');
-        }
-
-        const rzp = new (window as any).Razorpay({
-          key: data.keyId,
-          amount: data.amountPaise,
-          currency: data.currency || 'INR',
-          name: 'STRUCT Career Platform',
-          description: `${plan.name} Subscription`,
-          order_id: data.orderId,
-          prefill: {
-            email,
-          },
-          theme: {
-            color: '#0284c7',
-          },
-          modal: {
-            ondismiss: () => {
-              setCheckoutLoading(false);
-              setCheckoutMsg('Payment modal closed.');
-            },
-          },
-          handler: async (resp: {
-            razorpay_payment_id: string;
-            razorpay_order_id: string;
-            razorpay_signature: string;
-          }) => {
-            try {
-              setCheckoutMsg('Verifying payment confirmation...');
-              const verifyRes = await fetch('/api/payments/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(resp),
-              });
-              const verifyData = await verifyRes.json();
-              if (!verifyRes.ok || !verifyData.success) {
-                throw new Error(verifyData.error || 'Payment verification failed.');
-              }
-              setCheckoutMsg(`Payment successful! Plan ${plan.name} is now active.`);
-              fetchCredits(email);
-            } catch (vErr: any) {
-              setCheckoutErr(vErr.message || 'Payment verification error.');
-            } finally {
-              setCheckoutLoading(false);
-            }
-          },
-        });
-        rzp.open();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to initiate payment order.');
       }
+
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded || typeof window === 'undefined' || !(window as any).Razorpay) {
+        throw new Error('Unable to connect to Razorpay payment gateway. Please check your connection.');
+      }
+
+      const rzp = new (window as any).Razorpay({
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency || 'INR',
+        name: 'STRUCT Career Platform',
+        description: 'STRUCT Premium Resume Package (₹49)',
+        order_id: data.orderId,
+        prefill: {
+          email,
+        },
+        theme: {
+          color: '#0A1B38',
+        },
+        modal: {
+          ondismiss: () => {
+            setCheckoutLoading(false);
+            setCheckoutMsg('Checkout modal closed.');
+          },
+        },
+        handler: async (resp: {
+          razorpay_payment_id: string;
+          razorpay_order_id: string;
+          razorpay_signature: string;
+        }) => {
+          try {
+            setCheckoutMsg('Verifying payment confirmation...');
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(resp),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || 'Payment verification failed.');
+            }
+            setCheckoutMsg('Payment successful! Your Premium Resume AI & Detailed ATS credits are now active.');
+            fetchCredits(email);
+          } catch (vErr: any) {
+            setCheckoutErr(vErr.message || 'Payment verification error.');
+          } finally {
+            setCheckoutLoading(false);
+          }
+        },
+      });
+
+      rzp.open();
     } catch (err: any) {
-      setCheckoutErr(err.message);
+      setCheckoutErr(err.message || 'Failed to process checkout.');
       setCheckoutLoading(false);
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a', padding: '36px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F8FAFD', color: '#0F172A', padding: '36px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         {/* Top Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, background: '#ffffff', padding: '20px 24px', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, background: '#FFFFFF', padding: '22px 28px', borderRadius: 14, border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ background: '#0284c7', color: '#fff', fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
-                STRUCT CANDIDATE HUB
+              <span style={{ background: '#0284C7', color: '#FFFFFF', fontSize: 11, fontWeight: 800, padding: '3px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
+                STRUCT CANDIDATE DASHBOARD
               </span>
-              <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: '#0f172a' }}>
-                Technical Assessments &amp; Career Hub
+              <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: '#0A1B38' }}>
+                {userName ? `Welcome back, ${userName}` : 'Student Career & Assessment Hub'}
               </h1>
             </div>
-            <p style={{ color: '#64748b', fontSize: 13, margin: '4px 0 0' }}>
-              Take proctored coding exams, self-enroll in public practice benchmarks, and optimize your resume.
+            <p style={{ color: '#64748B', fontSize: 13, margin: '4px 0 0' }}>
+              Connected account: <strong>{userEmail || 'Active Candidate'}</strong> &bull; Free Plan Active
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ background: '#f1f5f9', padding: '6px 14px', borderRadius: 8, textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Active Credits Balance</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#0284c7' }}>
-                {credits !== null ? `${credits} Usages` : '0 Usages'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ background: '#F1F5F9', padding: '8px 16px', borderRadius: 8, textAlign: 'right', border: '1px solid #E2E8F0' }}>
+              <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>AI Polish Balance</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#0284C7' }}>
+                {credits !== null ? `${credits} Credits` : '0 Credits'}
               </div>
             </div>
             <Link
               href="/assess"
               style={{
-                background: '#0a1b38',
-                color: '#ffffff',
-                padding: '8px 16px',
-                borderRadius: 6,
+                background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                color: '#FFFFFF',
+                padding: '10px 18px',
+                borderRadius: 8,
                 fontSize: 13,
                 fontWeight: 700,
                 textDecoration: 'none',
+                boxShadow: '0 2px 8px rgba(10, 27, 56, 0.15)'
               }}
             >
-              Take Exam &rarr;
+              Enter Exams &rarr;
             </Link>
           </div>
         </div>
 
-        {/* Notifications */}
+        {/* Feedback Alerts */}
         {checkoutMsg && (
-          <div style={{ background: '#ecfdf5', border: '1px solid #10b981', color: '#065f46', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+          <div style={{ background: '#ECFDF5', border: '1px solid #10B981', color: '#065F46', padding: '12px 18px', borderRadius: 10, marginBottom: 20 }}>
             {checkoutMsg}
           </div>
         )}
         {checkoutErr && (
-          <div style={{ background: '#fef2f2', border: '1px solid #ef4444', color: '#991b1b', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+          <div style={{ background: '#FEF2F2', border: '1px solid #EF4444', color: '#991B1B', padding: '12px 18px', borderRadius: 10, marginBottom: 20 }}>
             {checkoutErr}
           </div>
         )}
 
-        {/* Core Actions Grid: Highlight Assessments & AI Interviews First */}
+        {/* 3 Core Product Columns */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 36 }}>
-          {/* Card 1: Technical Mock Assessments (Primary Flagship) */}
-          <div style={{ background: '#ffffff', border: '2px solid #0284c7', borderRadius: 14, padding: 24, boxShadow: '0 4px 14px rgba(2, 132, 199, 0.08)' }}>
+          {/* Card 1: STRUCT Assess */}
+          <div style={{ background: '#FFFFFF', border: '2px solid #0284C7', borderRadius: 14, padding: 24, boxShadow: '0 4px 16px rgba(2, 132, 199, 0.08)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#0284c7', textTransform: 'uppercase' }}>CORE ENGINE</span>
-              <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>Live Proctored</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#0284C7', textTransform: 'uppercase' }}>STRUCT ASSESS</span>
+              <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>Live Proctored</span>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>Proctored Technical Assessments</h3>
-            <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5, margin: '0 0 18px' }}>
-              Full-stack coding challenges, TypeScript/React benchmarks, and timed MCQs with server-side scoring and tab-switch telemetry.
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px', color: '#0A1B38' }}>Technical Examinations</h3>
+            <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.5, margin: '0 0 18px', flex: 1 }}>
+              Official college drives, anti-cheat monitored examinations, timed MCQs, and full answer submission tracking.
             </p>
             <Link
               href="/assess"
               style={{
                 display: 'inline-block',
-                background: '#0284c7',
-                color: '#ffffff',
+                background: '#0284C7',
+                color: '#FFFFFF',
                 padding: '10px 18px',
                 borderRadius: 8,
                 fontSize: 14,
                 fontWeight: 700,
                 textDecoration: 'none',
+                textAlign: 'center'
               }}
             >
               Enter Exam Portal &rarr;
             </Link>
           </div>
 
-          {/* Card 2: Adaptive AI Mock Interviews (Version 2 Preview) */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+          {/* Card 2: Resume Builder */}
+          <div style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 14, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>VERSION 2 ROADMAP</span>
-              <span style={{ background: '#fef3c7', color: '#b45309', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>In Development</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>RESUME BUILDER</span>
+              <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>Free Tool</span>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>AI Mock Technical Interviews</h3>
-            <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5, margin: '0 0 18px' }}>
-              Adaptive technical screeners and behavioral STAR interview simulations are launching in Version 2. Standardized practice assessments are available now.
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px', color: '#0A1B38' }}>ATS Resume Builder</h3>
+            <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.5, margin: '0 0 18px', flex: 1 }}>
+              Create a recruiter-ready resume with real-time formatting, education and project tracking, and vector PDF download.
             </p>
-            <div
+            <Link
+              href="/resume-builder"
               style={{
                 display: 'inline-block',
-                background: '#f8fafc',
-                color: '#64748b',
+                background: '#0A1B38',
+                color: '#FFFFFF',
                 padding: '10px 18px',
                 borderRadius: 8,
                 fontSize: 14,
                 fontWeight: 700,
-                border: '1px solid #cbd5e1',
-                cursor: 'default',
+                textDecoration: 'none',
+                textAlign: 'center'
               }}
             >
-              Coming in Version 2 &bull; Roadmap
-            </div>
+              Open Resume Builder &rarr;
+            </Link>
           </div>
 
-          {/* Card 3: Resume Diagnostic (Entry Utility) */}
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+          {/* Card 3: ATS Resume Checker */}
+          <div style={{ background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: 14, padding: 24, boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>ENTRY UTILITY</span>
-              <span style={{ background: '#f1f5f9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>Free Tool</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase' }}>ATS DIAGNOSTIC</span>
+              <span style={{ background: '#F1F5F9', color: '#475569', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4 }}>Free Scan</span>
             </div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>ATS Resume Diagnostic &amp; Builder</h3>
-            <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.5, margin: '0 0 18px' }}>
-              Test your resume against ATS parsers, match job description skills, and rewrite weak bullet points with Google X-Y-Z formula.
+            <h3 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px', color: '#0A1B38' }}>ATS Resume Checker</h3>
+            <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.5, margin: '0 0 18px', flex: 1 }}>
+              Test your resume against modern ATS scanning algorithms, identify keyword gaps, and check structural balance.
             </p>
             <Link
               href="/#resume-checker"
               style={{
                 display: 'inline-block',
                 background: '#475569',
-                color: '#ffffff',
+                color: '#FFFFFF',
                 padding: '10px 18px',
                 borderRadius: 8,
                 fontSize: 14,
                 fontWeight: 700,
                 textDecoration: 'none',
+                textAlign: 'center'
               }}
             >
               Run ATS Scanner &rarr;
@@ -277,108 +255,61 @@ export default function IndividualPortal() {
           </div>
         </div>
 
-        {/* Section: Premium Preparation Plans */}
-        <div id="plans" style={{ marginBottom: 40 }}>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ display: 'inline-flex', padding: '4px 12px', background: 'rgba(2, 132, 199, 0.08)', borderRadius: 999, color: '#0284c7', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 10 }}>
-              Authoritative Pro Plans &amp; Pricing
+        {/* Section: Single Authoritative Upgrade Card */}
+        <div style={{ background: '#FFFFFF', borderRadius: 16, border: '2px solid #0284C7', padding: '36px 32px', boxShadow: '0 12px 36px rgba(2, 132, 199, 0.1)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 24 }}>
+            <div style={{ maxWidth: 640 }}>
+              <div style={{ display: 'inline-flex', padding: '4px 10px', background: '#E0F2FE', borderRadius: 6, color: '#0369A1', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
+                STUDENT VALUE UPGRADE &bull; ONE-TIME PAYMENT
+              </div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: '#0A1B38', margin: '0 0 8px' }}>
+                STRUCT Premium Resume Package
+              </h2>
+              <p style={{ color: '#64748B', fontSize: 14, lineHeight: 1.6, margin: '0 0 16px' }}>
+                Resume AI Enhancement + Detailed ATS Analysis. Includes 2 complete runs with Google X-Y-Z bullet rewrites, metric optimizations, keyword gap matching, and section-by-section breakdown.
+              </p>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: 13, color: '#334155' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ color: '#0284C7' }}>✓</strong> 2 Complete AI Enhancement Runs
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ color: '#0284C7' }}>✓</strong> Google X-Y-Z Bullet Rewriting
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ color: '#0284C7' }}>✓</strong> Deep Section ATS Score Breakdown
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <strong style={{ color: '#0284C7' }}>✓</strong> One-time ₹49 payment (No recurring fees)
+                </span>
+              </div>
             </div>
-            <h2 style={{ fontSize: 26, fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.02em', color: '#0f172a' }}>
-              Individual Pro Preparation Memberships
-            </h2>
-            <p style={{ color: '#64748b', fontSize: 15, margin: 0, maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
-              Unlock monthly proctored technical exams, public practice catalog enrollment, and executive resume enhancements with transparent Rupee billing.
-            </p>
-          </div>
 
-          {/* Promo code bar */}
-          <div style={{ maxWidth: 440, margin: '0 auto 28px', display: 'flex', gap: 8 }}>
-            <input
-              type="text"
-              placeholder="Promo code (e.g. LAUNCH50)"
-              value={promoCode}
-              onChange={e => setPromoCode(e.target.value.toUpperCase())}
-              style={{ flex: 1, padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: 14 }}
-            />
-          </div>
-
-          {/* Plans Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
-            {plans.map((p) => {
-              const isPro = p.tierCode === 'struct_pro';
-              const isElite = p.tierCode === 'struct_elite';
-              return (
-                <div
-                  key={p.id}
-                  style={{
-                    background: '#ffffff',
-                    border: isPro ? '2px solid #0284c7' : '1px solid #e2e8f0',
-                    borderRadius: 16,
-                    padding: 28,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    boxShadow: isPro ? '0 12px 30px -5px rgba(2, 132, 199, 0.15)' : '0 2px 4px rgba(0,0,0,0.02)',
-                  }}
-                >
-                  {isPro && (
-                    <div style={{ position: 'absolute', top: -12, right: 24, background: '#0284c7', color: '#fff', fontSize: 11, fontWeight: 800, padding: '3px 12px', borderRadius: 999 }}>
-                      MOST POPULAR • BEST VALUE
-                    </div>
-                  )}
-
-                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>{p.name}</h3>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, margin: '14px 0 16px' }}>
-                    <span style={{ fontSize: 34, fontWeight: 800, color: '#0f172a' }}>₹{p.priceInr}</span>
-                    <span style={{ color: '#64748b', fontSize: 14, fontWeight: 600 }}>/ month</span>
-                  </div>
-
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <li style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14, color: '#334155', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ color: '#10b981', fontWeight: 800 }}>&check;</span>
-                      <span><strong>{p.limits?.mockAssessmentsPerMonth}</strong> Proctored Mock Assessments / mo</span>
-                    </li>
-                    <li style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14, color: '#334155', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ color: '#10b981', fontWeight: 800 }}>&check;</span>
-                      <span>Public Practice Catalog Self-Enrollment</span>
-                    </li>
-                    <li style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14, color: '#334155', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ color: '#10b981', fontWeight: 800 }}>&check;</span>
-                      <span><strong>{p.limits?.resumeAiCredits}</strong> Executive Resume AI Polish Usages</span>
-                    </li>
-                    <li style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9', fontSize: 14, color: '#334155', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ color: '#10b981', fontWeight: 800 }}>&check;</span>
-                      <span>Comprehensive <strong>{p.limits?.historyDays}</strong>-day score &amp; telemetry history</span>
-                    </li>
-                    {isElite && (
-                      <li style={{ padding: '6px 0', fontSize: 14, color: '#0284c7', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ color: '#0284c7', fontWeight: 800 }}>&check;</span>
-                        <span>Standardized FAANG &amp; Tier-1 Assessment Benchmarks</span>
-                      </li>
-                    )}
-                  </ul>
-
-                  <button
-                    disabled={checkoutLoading}
-                    onClick={() => handleSubscribe(p)}
-                    style={{
-                      width: '100%',
-                      background: isPro ? '#0284c7' : '#0a1b38',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '13px 0',
-                      borderRadius: 8,
-                      fontWeight: 800,
-                      fontSize: 14,
-                      cursor: checkoutLoading ? 'not-allowed' : 'pointer',
-                      boxShadow: isPro ? '0 4px 12px rgba(2, 132, 199, 0.25)' : 'none',
-                    }}
-                  >
-                    {checkoutLoading && selectedPlan?.id === p.id ? 'Connecting Gateway...' : `Subscribe to ${p.name} (₹${p.priceInr})`}
-                  </button>
-                </div>
-              );
-            })}
+            <div style={{ textAlign: 'center', minWidth: 240 }}>
+              <div style={{ fontSize: 36, fontWeight: 800, color: '#0A1B38', lineHeight: 1 }}>₹49</div>
+              <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600, margin: '4px 0 16px' }}>one-time payment</div>
+              <button
+                type="button"
+                disabled={checkoutLoading}
+                onClick={handleBuyPremium}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '13px 24px',
+                  borderRadius: 10,
+                  fontSize: 15,
+                  fontWeight: 800,
+                  cursor: checkoutLoading ? 'not-allowed' : 'pointer',
+                  opacity: checkoutLoading ? 0.8 : 1,
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.3)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {checkoutLoading ? 'Connecting...' : 'Upgrade Now — ₹49 →'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

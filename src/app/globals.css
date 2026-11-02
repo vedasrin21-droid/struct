@@ -348,7 +348,7 @@ body {
     color: #172B4D !important;
   }
 
-  nav, footer, .no-print, .btn, .resume-checker-section, .hero-section, .features-section, .how-it-works-section, .faq-section {
+  nav, footer, .no-print, .btn, .hero-section, .features-section, .how-it-works-section, .faq-section {
     display: none !important;
   }
 

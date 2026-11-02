@@ -49,11 +49,116 @@ export function ResumeBuilder({
 
     setExportStatus('preparing');
 
-    const originalTitle = typeof document !== 'undefined' ? document.title : '';
     const candidateName = resumeData.contact.fullName?.trim() || 'Candidate';
     const cleanName = candidateName.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
     const pdfFilename = `${cleanName}_Resume`;
 
+    const resumeElement = resumePrintRef.current;
+
+    // Use an isolated iframe for printing to guarantee 0 blank pages and bypass parent CSS overflow/display bugs
+    if (typeof document !== 'undefined' && resumeElement) {
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        iframe.style.visibility = 'hidden';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow?.document;
+        if (iframeDoc) {
+          // Gather page styles to inherit typography and colors
+          const styleSheets = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map(el => el.outerHTML)
+            .join('\n');
+
+          iframeDoc.open();
+          iframeDoc.write(`
+            <!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <meta charset="utf-8" />
+                <title>${pdfFilename}</title>
+                ${styleSheets}
+                <style>
+                  @page {
+                    size: A4 portrait;
+                    margin: 12mm 14mm;
+                  }
+                  html, body {
+                    background: #FFFFFF !important;
+                    color: #111827 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    width: 100% !important;
+                    height: auto !important;
+                    font-family: ${activeLayout === 'classic' ? "'Georgia', 'Times New Roman', serif" : "'Plus Jakarta Sans', -apple-system, sans-serif"} !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                  }
+                  #resume-print-area {
+                    display: block !important;
+                    visibility: visible !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    font-size: 10pt !important;
+                    line-height: 1.45 !important;
+                  }
+                  .no-print {
+                    display: none !important;
+                  }
+                  * {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    box-sizing: border-box !important;
+                  }
+                </style>
+              </head>
+              <body>
+                <div id="resume-print-area" class="resume-sheet ${activeLayout === 'classic' ? 'layout-classic' : 'layout-modern'}">
+                  ${resumeElement.innerHTML}
+                </div>
+              </body>
+            </html>
+          `);
+          iframeDoc.close();
+
+          setExportStatus('printing');
+
+          setTimeout(() => {
+            try {
+              iframe.contentWindow?.focus();
+              iframe.contentWindow?.print();
+            } catch (err) {
+              console.warn('Iframe print failed, falling back to window.print():', err);
+              window.print();
+            } finally {
+              setTimeout(() => {
+                if (document.body.contains(iframe)) {
+                  document.body.removeChild(iframe);
+                }
+                setExportStatus('success');
+                setTimeout(() => setExportStatus('idle'), 2000);
+              }, 1200);
+            }
+          }, 350);
+          return;
+        }
+      } catch (err) {
+        console.warn('Failed to initialize print iframe, falling back to window.print():', err);
+      }
+    }
+
+    // Direct window.print() fallback
+    const originalTitle = typeof document !== 'undefined' ? document.title : '';
     if (typeof document !== 'undefined') {
       document.title = pdfFilename;
     }
@@ -85,7 +190,6 @@ export function ResumeBuilder({
         window.addEventListener('afterprint', cleanup);
       }
 
-      // Safety timeout in case afterprint does not fire in the browser/environment
       setTimeout(() => {
         if (typeof document !== 'undefined' && document.title === pdfFilename) {
           document.title = originalTitle;

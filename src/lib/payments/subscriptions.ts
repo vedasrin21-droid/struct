@@ -29,7 +29,37 @@ export interface PlanDetails {
 }
 
 export const AUTHORITATIVE_PLANS: Record<string, PlanDetails> = {
-  // Individual Plans
+  // Free Plan A
+  struct_free: {
+    id: 'plan_free',
+    tierCode: 'struct_free',
+    target: 'individual',
+    name: 'STRUCT Free',
+    priceInr: 0,
+    billingCycle: 'monthly',
+    limits: {
+      mockAssessmentsPerMonth: 999,
+      resumeAiCredits: 0,
+      historyDays: 30,
+    },
+    isActive: true,
+  },
+  // Premium Plan B
+  struct_premium: {
+    id: 'plan_premium',
+    tierCode: 'struct_premium',
+    target: 'individual',
+    name: 'STRUCT Premium Resume Package',
+    priceInr: 49,
+    billingCycle: 'monthly',
+    limits: {
+      mockAssessmentsPerMonth: 999,
+      resumeAiCredits: 2,
+      historyDays: 180,
+    },
+    isActive: true,
+  },
+  // Legacy / Audit compatibility tiers
   struct_starter: {
     id: 'plan_starter',
     tierCode: 'struct_starter',
@@ -43,7 +73,7 @@ export const AUTHORITATIVE_PLANS: Record<string, PlanDetails> = {
       resumeAiCredits: 3,
       historyDays: 30,
     },
-    isActive: true,
+    isActive: false,
   },
   struct_pro: {
     id: 'plan_pro',
@@ -58,7 +88,7 @@ export const AUTHORITATIVE_PLANS: Record<string, PlanDetails> = {
       resumeAiCredits: 10,
       historyDays: 90,
     },
-    isActive: true,
+    isActive: false,
   },
   struct_elite: {
     id: 'plan_elite',
@@ -75,7 +105,7 @@ export const AUTHORITATIVE_PLANS: Record<string, PlanDetails> = {
       companySpecificPrep: true,
       careerRoadmap: true,
     },
-    isActive: true,
+    isActive: false,
   },
 
   // Organization Plans

@@ -361,5 +361,26 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   updated_at BIGINT NOT NULL
 );
 
+-- 23. Candidate Examination Feedback & Experience Metrics
+CREATE TABLE IF NOT EXISTS exam_feedback (
+  id VARCHAR(64) PRIMARY KEY,
+  exam_id VARCHAR(64) NOT NULL,
+  attempt_id VARCHAR(64),
+  candidate_email VARCHAR(255) NOT NULL,
+  candidate_name VARCHAR(255),
+  overall_rating INTEGER NOT NULL,
+  navigation_rating INTEGER NOT NULL,
+  technical_issues VARCHAR(100),
+  liked_aspects TEXT,
+  improvement_suggestions TEXT,
+  would_recommend VARCHAR(20),
+  marketing_consent BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_exam_feedback_exam_id ON exam_feedback(exam_id);
+CREATE INDEX IF NOT EXISTS idx_exam_feedback_email ON exam_feedback(candidate_email);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id VARCHAR(64) REFERENCES organizations(id) ON DELETE SET NULL;
+
 

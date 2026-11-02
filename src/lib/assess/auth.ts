@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 export interface AssessUser {
   id: string;
   email: string;
-  role: 'admin' | 'candidate' | 'user';
+  role: 'admin' | 'candidate' | 'user' | 'super_admin';
   name: string;
   department: string;
   college?: string;
@@ -120,7 +120,7 @@ export async function requireAuth(request: Request): Promise<AssessUser> {
 
 export async function requireAdmin(request: Request): Promise<AssessUser> {
   const user = await requireAuth(request);
-  if (user.role !== 'admin') {
+  if (user.role !== 'admin' && user.role !== 'super_admin') {
     throw new Error('FORBIDDEN_ADMIN_REQUIRED');
   }
   return user;

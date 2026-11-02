@@ -1,16 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface NavbarProps {
-  onCheckResumeClick: () => void;
+  onCheckResumeClick?: () => void;
   onOpenBuilderClick?: () => void;
   onHomeClick?: () => void;
 }
 
 export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const email = localStorage.getItem('struct_user_email');
+      setUserEmail(email);
+    }
+  }, []);
 
   return (
     <header
@@ -91,7 +99,7 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
                 color: '#0284C7',
               }}
             >
-              Assessments &amp; Hiring Platform
+              Career &amp; ATS Platform
             </span>
           </div>
         </Link>
@@ -101,11 +109,56 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           style={{
             display: 'none',
             alignItems: 'center',
-            gap: '26px',
+            gap: '24px',
           }}
           className="desktop-nav"
         >
           <Link
+            href="/"
+            style={{
+              color: '#334155',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            Home
+          </Link>
+
+          <Link
+            href="/resume-builder"
+            style={{
+              color: '#334155',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            Resume Builder
+          </Link>
+
+          <a
+            href="/#resume-checker"
+            onClick={(e) => {
+              if (onCheckResumeClick) {
+                e.preventDefault();
+                onCheckResumeClick();
+              }
+            }}
+            style={{
+              color: '#334155',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            ATS Checker
+          </a>
+
+          <Link
             href="/assess"
             style={{
               color: '#334155',
@@ -115,11 +168,11 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
               transition: 'color 0.15s ease',
             }}
           >
-            Practice Assessments
+            Assessments
           </Link>
 
           <a
-            href="#pricing"
+            href="/#pricing"
             style={{
               color: '#334155',
               textDecoration: 'none',
@@ -128,78 +181,88 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
               transition: 'color 0.15s ease',
             }}
           >
-            Pro Plans &amp; Pricing
-          </a>
-
-          <a
-            href="#resume-checker"
-            onClick={(e) => {
-              e.preventDefault();
-              onCheckResumeClick();
-            }}
-            style={{
-              color: '#64748B',
-              textDecoration: 'none',
-              fontWeight: 500,
-              fontSize: '0.88rem',
-              transition: 'color 0.15s ease',
-            }}
-          >
-            Resume Diagnostic
+            Pricing
           </a>
         </nav>
 
-        {/* Right Corner: Recruiter Link & Primary Assessments CTA */}
+        {/* Right Corner: User Identity & Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Link
-            href="/assess/admin"
-            style={{
-              color: '#475569',
-              textDecoration: 'none',
-              fontSize: '0.86rem',
-              fontWeight: 600,
-              padding: '6px 12px',
-              borderRadius: '6px',
-              transition: 'background 0.15s ease',
-            }}
-            className="hidden-mobile"
-          >
-            Recruiter Login
-          </Link>
+          {userEmail ? (
+            <>
+              <Link
+                href="/portal"
+                style={{
+                  color: '#0A1B38',
+                  textDecoration: 'none',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(15, 23, 42, 0.12)',
+                  background: '#FFFFFF',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                }}
+                className="hidden-mobile"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/assess"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                  color: '#FFFFFF',
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
+                }}
+              >
+                Assessments &rarr;
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                style={{
+                  color: '#475569',
+                  textDecoration: 'none',
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  transition: 'background 0.15s ease',
+                }}
+                className="hidden-mobile"
+              >
+                Sign In
+              </Link>
 
-          <Link
-            href="/assess"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
-              color: '#FFFFFF',
-              padding: '9px 20px',
-              borderRadius: '8px',
-              fontSize: '0.88rem',
-              fontWeight: 800,
-              textDecoration: 'none',
-              boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
-              letterSpacing: '-0.2px',
-            }}
-          >
-            <span>Assessments</span>
-            <span
-              style={{
-                background: 'rgba(255, 255, 255, 0.22)',
-                color: '#FFFFFF',
-                fontSize: '0.62rem',
-                fontWeight: 800,
-                padding: '1px 5px',
-                borderRadius: '4px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Live
-            </span>
-            <span>&rarr;</span>
-          </Link>
+              <Link
+                href="/sign-up"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                  color: '#FFFFFF',
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
+                }}
+              >
+                Get Started &rarr;
+              </Link>
+            </>
+          )}
 
           {/* Mobile Hamburger Button */}
           <button
@@ -248,63 +311,77 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           }}
         >
           <Link
-            href="/assess"
+            href="/"
             onClick={() => setMobileMenuOpen(false)}
-            style={{
-              color: '#0284C7',
-              textDecoration: 'none',
-              fontWeight: 700,
-              fontSize: '0.95rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '6px 0',
-            }}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
           >
-            <span>Online Assessments (Live Portal)</span>
-            <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px' }}>Launch</span>
+            Home
           </Link>
           <Link
-            href="/assess"
+            href="/resume-builder"
             onClick={() => setMobileMenuOpen(false)}
             style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
           >
-            Practice Assessments
+            Resume Builder (Free)
           </Link>
           <a
-            href="#pricing"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
-          >
-            Pro Features &amp; Pricing (INR)
-          </a>
-          <a
-            href="#resume-checker"
+            href="/#resume-checker"
             onClick={() => {
               setMobileMenuOpen(false);
-              onCheckResumeClick();
+              if (onCheckResumeClick) onCheckResumeClick();
             }}
-            style={{ color: '#64748B', textDecoration: 'none', fontWeight: 500, fontSize: '0.9rem', padding: '6px 0' }}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
           >
-            Resume Diagnostic (Free Entry Tool)
+            ATS Resume Checker
           </a>
           <Link
             href="/assess"
             onClick={() => setMobileMenuOpen(false)}
-            style={{
-              marginTop: '8px',
-              background: '#0A1B38',
-              color: '#FFFFFF',
-              textAlign: 'center',
-              padding: '10px 16px',
-              borderRadius: '8px',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              textDecoration: 'none',
-            }}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
           >
-            Candidate &amp; Recruiter Portal &rarr;
+            STRUCT Assess (Exams)
           </Link>
+          <a
+            href="/#pricing"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
+          >
+            Pricing
+          </a>
+          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <Link
+              href="/portal"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                background: '#F1F5F9',
+                color: '#0A1B38',
+                textAlign: 'center',
+                padding: '9px 16px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+              }}
+            >
+              My Dashboard
+            </Link>
+            <Link
+              href="/sign-in"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                color: '#FFFFFF',
+                textAlign: 'center',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+              }}
+            >
+              Sign In / Sign Up &rarr;
+            </Link>
+          </div>
         </div>
       )}
 
