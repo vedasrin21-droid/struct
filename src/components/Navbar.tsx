@@ -16,9 +16,37 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const email = localStorage.getItem('struct_user_email');
-      setUserEmail(email);
+      if (email) setUserEmail(email);
     }
+    fetch('/api/assess/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.user) {
+          setUserEmail(data.user.email);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('struct_user_email', data.user.email);
+            localStorage.setItem('struct_user_name', data.user.name || '');
+            localStorage.setItem('struct_user_role', data.user.role || 'candidate');
+          }
+        } else {
+          setUserEmail(null);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/assess/auth/logout', { method: 'POST' });
+    } catch {}
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('struct_user_email');
+      localStorage.removeItem('struct_user_name');
+      localStorage.removeItem('struct_user_role');
+    }
+    setUserEmail(null);
+    window.location.href = '/';
+  };
 
   return (
     <header
@@ -127,19 +155,6 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           </Link>
 
           <Link
-            href="/"
-            style={{
-              color: '#334155',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              transition: 'color 0.15s ease',
-            }}
-          >
-            Home
-          </Link>
-
-          <Link
             href="/dashboard"
             style={{
               color: '#334155',
@@ -223,7 +238,7 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           </Link>
 
           {userEmail ? (
-            <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Link
                 href="/dashboard"
                 style={{
@@ -239,7 +254,25 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
               >
                 Dashboard
               </Link>
-            </>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                style={{
+                  background: '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  color: '#475569',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                className="hidden-mobile"
+              >
+                Sign Out
+              </button>
+            </div>
           ) : (
             <>
               <Link
@@ -371,38 +404,78 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
             ATS Resume Checker
           </a>
           <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                background: '#F1F5F9',
-                color: '#0A1B38',
-                textAlign: 'center',
-                padding: '9px 16px',
-                borderRadius: '8px',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                textDecoration: 'none',
-              }}
-            >
-              Candidate Dashboard
-            </Link>
-            <Link
-              href="/register"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
-                color: '#FFFFFF',
-                textAlign: 'center',
-                padding: '10px 16px',
-                borderRadius: '8px',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                textDecoration: 'none',
-              }}
-            >
-              Sign In / Sign Up &rarr;
-            </Link>
+            {userEmail ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    background: '#F1F5F9',
+                    color: '#0A1B38',
+                    textAlign: 'center',
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Candidate Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+                  style={{
+                    background: '#FEF2F2',
+                    border: '1px solid #FCA5A5',
+                    color: '#991B1B',
+                    textAlign: 'center',
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    background: '#F1F5F9',
+                    color: '#0A1B38',
+                    textAlign: 'center',
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Candidate Login
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                    color: '#FFFFFF',
+                    textAlign: 'center',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Create Candidate Account &rarr;
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

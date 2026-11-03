@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface HeroProps {
@@ -13,6 +13,18 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
   const [activeSimulatorTab, setActiveSimulatorTab] = useState<'exam' | 'interview' | 'recruiter'>('exam');
   const [testRunCompleted, setTestRunCompleted] = useState(false);
   const [isRunningTests, setIsRunningTests] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/assess/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.user) {
+          setUserEmail(data.user.email);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSimulateTests = () => {
     setIsRunningTests(true);
@@ -149,27 +161,51 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                   <span style={{ fontSize: '1.15rem' }}>&rarr;</span>
                 </Link>
 
-                <Link
-                  href="/register"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: '#FFFFFF',
-                    color: 'var(--brand-dark)',
-                    padding: '15px 26px',
-                    borderRadius: '12px',
-                    fontWeight: 600,
-                    fontSize: '1rem',
-                    textDecoration: 'none',
-                    boxShadow: '0 4px 16px -2px rgba(18, 51, 107, 0.08)',
-                    border: '1.5px solid var(--brand-border)',
-                    transition: 'all 0.18s ease',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <span>Create Your Account</span>
-                </Link>
+                {userEmail ? (
+                  <Link
+                    href="/dashboard"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: '#FFFFFF',
+                      color: 'var(--brand-dark)',
+                      padding: '15px 26px',
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      fontSize: '1rem',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 16px -2px rgba(18, 51, 107, 0.08)',
+                      border: '1.5px solid var(--brand-border)',
+                      transition: 'all 0.18s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span>Go to My Dashboard &rarr;</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/register"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: '#FFFFFF',
+                      color: 'var(--brand-dark)',
+                      padding: '15px 26px',
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      fontSize: '1rem',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 16px -2px rgba(18, 51, 107, 0.08)',
+                      border: '1.5px solid var(--brand-border)',
+                      transition: 'all 0.18s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span>Create Your Account</span>
+                  </Link>
+                )}
               </div>
 
               {/* Dedicated Assigned Exam Link */}

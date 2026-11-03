@@ -10,9 +10,10 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
   const pathname = req.nextUrl.pathname;
   const examToken = req.cookies.get('struct_exam_token')?.value || req.cookies.get('talvyn_assess_token')?.value;
 
-  // 1. If signed in, prevent getting stuck on auth pages
-  if (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up') || pathname.startsWith('/login') || pathname.startsWith('/register')) {
-    if (examToken) {
+  // 1. If signed in, prevent getting stuck on auth pages unless explicitly requesting a new account or sign in
+  if (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')) {
+    const isExplicit = req.nextUrl.searchParams.has('new') || req.nextUrl.searchParams.has('switch');
+    if (examToken && !isExplicit) {
       const rawRedirect = req.nextUrl.searchParams.get('redirect_url') || req.nextUrl.searchParams.get('fallback_redirect_url') || req.nextUrl.searchParams.get('redirect') || '/dashboard';
       const redirectUrl = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/dashboard';
       return NextResponse.redirect(new URL(redirectUrl, req.url));

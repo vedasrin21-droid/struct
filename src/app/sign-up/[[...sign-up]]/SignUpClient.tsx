@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -14,6 +14,18 @@ export default function SignUpClient() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingEmail, setExistingEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/assess/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated && data.user) {
+          setExistingEmail(data.user.email);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,6 +248,40 @@ export default function SignUpClient() {
               marginBottom: '20px'
             }}>
               {error}
+            </div>
+          )}
+
+          {/* Existing Session Notice */}
+          {existingEmail && (
+            <div style={{
+              background: '#F0F9FF',
+              border: '1px solid #BAE6FD',
+              color: '#0369A1',
+              padding: '12px 14px',
+              borderRadius: '8px',
+              fontSize: '0.84rem',
+              lineHeight: 1.45,
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexWrap: 'wrap'
+            }}>
+              <div>
+                You are currently signed in as <strong>{existingEmail}</strong>. Submitting below will create and switch to a new account.
+              </div>
+              <Link
+                href="/dashboard"
+                style={{
+                  color: '#0284C7',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Go to Dashboard &rarr;
+              </Link>
             </div>
           )}
 
