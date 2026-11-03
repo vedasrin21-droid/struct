@@ -127,6 +127,45 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           </Link>
 
           <Link
+            href="/"
+            style={{
+              color: '#334155',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            Home
+          </Link>
+
+          <Link
+            href="/dashboard"
+            style={{
+              color: '#334155',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            Mock Assessments
+          </Link>
+
+          <a
+            href="/#categories"
+            style={{
+              color: '#334155',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            Assessment Categories
+          </a>
+
+          <Link
             href="/resume-builder"
             style={{
               color: '#334155',
@@ -157,78 +196,54 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           >
             ATS Checker
           </a>
-
-          <Link
-            href="/assess"
-            style={{
-              color: '#334155',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              transition: 'color 0.15s ease',
-            }}
-          >
-            Assessments
-          </Link>
-
-          <a
-            href="/#pricing"
-            style={{
-              color: '#334155',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              transition: 'color 0.15s ease',
-            }}
-          >
-            Pricing
-          </a>
         </nav>
 
         {/* Right Corner: User Identity & Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Dedicated Assigned Exam Login Link */}
+          <Link
+            href="/assess/login"
+            style={{
+              fontSize: '0.84rem',
+              fontWeight: 700,
+              color: '#0A1B38',
+              background: '#F1F5F9',
+              border: '1px solid #CBD5E1',
+              padding: '7px 13px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            className="hidden-mobile"
+          >
+            <span>Assigned Exam Login</span>
+            <span style={{ color: '#0284C7' }}>&rarr;</span>
+          </Link>
+
           {userEmail ? (
             <>
               <Link
-                href="/portal"
+                href="/dashboard"
                 style={{
-                  color: '#0A1B38',
+                  color: '#FFFFFF',
                   textDecoration: 'none',
                   fontSize: '0.88rem',
                   fontWeight: 700,
-                  padding: '7px 14px',
+                  padding: '7px 16px',
                   borderRadius: '8px',
-                  border: '1px solid rgba(15, 23, 42, 0.12)',
-                  background: '#FFFFFF',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                  background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
+                  boxShadow: '0 2px 8px rgba(10, 27, 56, 0.15)',
                 }}
-                className="hidden-mobile"
               >
                 Dashboard
-              </Link>
-              <Link
-                href="/assess"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
-                  color: '#FFFFFF',
-                  padding: '8px 18px',
-                  borderRadius: '8px',
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
-                }}
-              >
-                Assessments &rarr;
               </Link>
             </>
           ) : (
             <>
               <Link
-                href="/sign-in"
+                href="/login"
                 style={{
                   color: '#475569',
                   textDecoration: 'none',
@@ -240,11 +255,11 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
                 }}
                 className="hidden-mobile"
               >
-                Sign In
+                Login
               </Link>
 
               <Link
-                href="/sign-up"
+                href="/register"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -318,11 +333,32 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
             Home
           </Link>
           <Link
+            href="/dashboard"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
+          >
+            Mock Assessments
+          </Link>
+          <a
+            href="/#categories"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
+          >
+            Assessment Categories
+          </a>
+          <Link
+            href="/assess/login"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ color: '#0284C7', textDecoration: 'none', fontWeight: 700, fontSize: '0.95rem', padding: '6px 0' }}
+          >
+            Assigned Examination Login &rarr;
+          </Link>
+          <Link
             href="/resume-builder"
             onClick={() => setMobileMenuOpen(false)}
             style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
           >
-            Resume Builder (Free)
+            Resume Builder
           </Link>
           <a
             href="/#resume-checker"
@@ -334,23 +370,9 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
           >
             ATS Resume Checker
           </a>
-          <Link
-            href="/assess"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
-          >
-            STRUCT Assess (Exams)
-          </Link>
-          <a
-            href="/#pricing"
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ color: '#0A1B38', textDecoration: 'none', fontWeight: 600, fontSize: '0.95rem', padding: '6px 0' }}
-          >
-            Pricing
-          </a>
           <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <Link
-              href="/portal"
+              href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
               style={{
                 background: '#F1F5F9',
@@ -363,10 +385,10 @@ export function Navbar({ onCheckResumeClick, onOpenBuilderClick, onHomeClick }: 
                 textDecoration: 'none',
               }}
             >
-              My Dashboard
+              Candidate Dashboard
             </Link>
             <Link
-              href="/sign-in"
+              href="/register"
               onClick={() => setMobileMenuOpen(false)}
               style={{
                 background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',

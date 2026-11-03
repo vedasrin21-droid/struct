@@ -60,12 +60,13 @@ export function ResumeBuilder({
       try {
         const iframe = document.createElement('iframe');
         iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '-9999px';
+        iframe.style.width = '210mm';
+        iframe.style.height = '297mm';
         iframe.style.border = '0';
-        iframe.style.visibility = 'hidden';
+        iframe.style.opacity = '0';
+        iframe.style.pointerEvents = 'none';
         document.body.appendChild(iframe);
 
         const iframeDoc = iframe.contentWindow?.document;
@@ -87,6 +88,25 @@ export function ResumeBuilder({
                   @page {
                     size: A4 portrait;
                     margin: 0 !important;
+                  }
+                  @page :first {
+                    margin: 0 !important;
+                  }
+                  @page :left {
+                    margin: 0 !important;
+                  }
+                  @page :right {
+                    margin: 0 !important;
+                  }
+                  @media print {
+                    @page {
+                      size: portrait;
+                      margin: 0 !important;
+                    }
+                    html, body {
+                      margin: 0 !important;
+                      padding: 0 !important;
+                    }
                   }
                   html, body {
                     background: #FFFFFF !important;
@@ -2239,6 +2259,15 @@ export function ResumeBuilder({
 
           @page {
             size: portrait;
+            margin: 0 !important;
+          }
+          @page :first {
+            margin: 0 !important;
+          }
+          @page :left {
+            margin: 0 !important;
+          }
+          @page :right {
             margin: 0 !important;
           }
         }

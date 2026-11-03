@@ -6,64 +6,79 @@ import Link from 'next/link';
 export function Features() {
   const featureList = [
     {
-      code: 'ASSESS.01',
+      code: '01',
       tag: 'FLAGSHIP CORE',
-      title: 'Anti-Cheat Proctored Assessments',
-      desc: 'Institutional-grade technical exams with real-time countdown synchronization, autosave versioning, and non-invasive proctoring signals.',
+      title: 'Mock Assessments',
+      desc: 'Practice for technical, aptitude, and hiring assessments with structured mock tests.',
       highlights: [
-        'Browser blur & tab-switch telemetry',
-        'Homoglyph anti-Google search index defense',
-        'Automated server-side positive & negative marking',
-        'Timed question-level duration control',
+        'Standardized questions across core engineering tracks',
+        'Server-side countdown timer & autosave persistence',
+        'Automatic grading with positive and negative marking',
+        'Instant benchmark evaluation and score summaries',
       ],
-      linkText: 'Explore Exam System',
-      linkHref: '/assess',
+      ctaText: 'Explore Assessments',
+      ctaHref: '/dashboard',
       accentColor: '#0284C7',
     },
     {
-      code: 'AI.02',
-      tag: 'VERSION 2 ROADMAP',
-      title: 'Adaptive Mock Technical Interviews',
-      desc: 'Simulate high-stakes technical screener rounds with AI evaluators that adapt questions dynamically based on your code and explanations.',
+      code: '02',
+      tag: 'SKILL PATHWAYS',
+      title: 'Assessment Categories',
+      desc: 'Discover assessments based on your skills, interests, and career goals.',
       highlights: [
-        'Real-time coding & system design critique',
-        'STAR framework behavioral coaching',
-        'Immediate transcript scoring & gap report',
-        'Industry-tailored questions (FAANG, Fintech, Startups)',
+        'Data Structures & Algorithms track',
+        'Full-Stack & Web Architecture tracks',
+        'Databases, SQL, & System Design modules',
+        'Quantitative Aptitude & Logical Reasoning practice',
       ],
-      linkText: 'Version 2 Preview',
-      linkHref: '/portal',
-      accentColor: '#10B981',
+      ctaText: 'Browse Categories',
+      ctaHref: '#categories',
+      accentColor: '#0A1B38',
     },
     {
-      code: 'RECRUIT.03',
-      tag: 'ENTERPRISE HIRING',
-      title: 'Recruitment & Candidate Roster Automation',
-      desc: 'Empower university departments and hiring managers to dispatch exams, monitor concurrent candidates, and export verified score rosters.',
+      code: '03',
+      tag: 'INSTITUTIONAL & HIRING',
+      title: 'Hiring Assessments',
+      desc: 'Participate in examinations assigned by hiring teams, E-Cells, and organizations.',
       highlights: [
-        'Bulk CSV candidate credential generation (Mode B)',
-        'Multi-tenant organization data isolation',
-        'Automated score release gating & answer concealment',
-        'Complete candidate leaderboard with CSV export',
+        'Secure password-authenticated participant login',
+        'Isolated college drives and recruitment screenings',
+        'Non-invasive proctoring & focus telemetry',
+        'Cryptographic submission verification receipt',
       ],
-      linkText: 'Recruiter Console',
-      linkHref: '/assess/admin',
-      accentColor: '#0F172A',
+      ctaText: 'Enter Examination Portal',
+      ctaHref: '/assess/login',
+      accentColor: '#1E293B',
     },
     {
-      code: 'CAREER.04',
-      tag: 'ENTRY UTILITY',
-      title: 'ATS Diagnostics & Smart Resume Builder',
-      desc: 'The diagnostic gateway: pinpoint formatting traps and upgrade bullet points using the Google X-Y-Z formula before you apply.',
+      code: '04',
+      tag: 'CAREER TOOL',
+      title: 'Resume Builder',
+      desc: 'Create a professional, ATS-friendly resume.',
       highlights: [
-        'Deterministic 0–100 composite parser score',
-        '1-to-1 job description competency gap analysis',
-        'Executive bullet upgrades grounded in real achievements',
-        'Clean ATS-optimized PDF generation',
+        'Zero-clipping, vector-clean A4 PDF generation',
+        'Live two-column preview as you type',
+        'Classic Executive and Modern Clean layout options',
+        '100% free with no hidden export paywalls',
       ],
-      linkText: 'Check Resume Score',
-      linkHref: '#resume-checker',
+      ctaText: 'Build My Resume',
+      ctaHref: '/resume-builder',
       accentColor: '#64748B',
+    },
+    {
+      code: '05',
+      tag: 'CAREER TOOL',
+      title: 'ATS Resume Checker',
+      desc: "Understand your resume's ATS compatibility and identify improvement opportunities.",
+      highlights: [
+        'Instant 0–100 parsing health evaluation',
+        'Structural section & contact validation',
+        'Keyword match against job descriptions',
+        'Optional Google X-Y-Z formula AI enhancement',
+      ],
+      ctaText: 'Check My Resume',
+      ctaHref: '#resume-checker',
+      accentColor: '#475569',
     },
   ];
 
@@ -78,7 +93,7 @@ export function Features() {
         borderTop: '1px solid rgba(15, 23, 42, 0.08)',
       }}
     >
-      <div style={{ maxWidth: '1180px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: '1220px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: '56px' }}>
           <div
             style={{
@@ -97,45 +112,55 @@ export function Features() {
               marginBottom: '16px',
             }}
           >
-            SaaS Platform Architecture
+            STRUCT Platform Capabilities
           </div>
           <h2
             style={{
               fontFamily: "'Space Grotesk', -apple-system, sans-serif",
-              fontSize: 'clamp(2.1rem, 3.5vw, 2.8rem)',
+              fontSize: 'clamp(2.1rem, 3.8vw, 3rem)',
               fontWeight: 800,
               color: '#0A1B38',
-              letterSpacing: '-1px',
-              marginBottom: '14px',
+              letterSpacing: '-1.2px',
+              margin: '0 0 16px',
             }}
           >
-            Built for High-Stakes Career Benchmarking
+            Built for Serious Technical Assessment &amp; Career Preparation
           </h2>
-          <p style={{ color: '#64748B', fontSize: '1.1rem', maxWidth: '680px', margin: '0 auto', lineHeight: 1.6 }}>
-            STRUCT unifies technical assessments, AI interview simulations, and candidate recruitment tools under a single authoritative, security-hardened SaaS platform.
+          <p
+            style={{
+              fontSize: '1.08rem',
+              color: '#64748B',
+              maxWidth: '680px',
+              margin: '0 auto',
+              lineHeight: 1.6,
+            }}
+          >
+            STRUCT powers standardized mock practice, campus hiring drives, and foundational career readiness for collegiate candidates.
           </p>
         </div>
 
+        {/* Feature Grid */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
-            gap: '24px',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+            gap: '28px',
           }}
         >
-          {featureList.map((feat, idx) => (
+          {featureList.map((feat) => (
             <div
-              key={idx}
+              key={feat.code}
               style={{
-                background: '#FAF9F6',
-                border: '1px solid #E2E8F0',
-                borderRadius: '16px',
-                padding: '32px 26px',
+                background: '#FFFFFF',
+                borderRadius: '18px',
+                border: '1.5px solid #E5E8EF',
+                padding: '34px 30px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                boxShadow: '0 4px 18px rgba(10, 27, 56, 0.04)',
+                position: 'relative',
+                transition: 'transform 0.18s ease, box-shadow 0.18s ease',
               }}
             >
               <div>
@@ -149,14 +174,11 @@ export function Features() {
                 >
                   <span
                     style={{
-                      fontFamily: 'monospace',
-                      fontSize: '0.78rem',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontSize: '0.85rem',
                       fontWeight: 800,
                       color: feat.accentColor,
-                      background: '#FFFFFF',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      border: '1px solid #E2E8F0',
+                      letterSpacing: '1px',
                     }}
                   >
                     {feat.code}
@@ -164,10 +186,12 @@ export function Features() {
                   <span
                     style={{
                       fontSize: '0.72rem',
-                      fontWeight: 800,
+                      fontWeight: 700,
+                      padding: '3px 10px',
+                      borderRadius: '6px',
+                      background: 'rgba(15, 23, 42, 0.05)',
+                      color: '#475569',
                       letterSpacing: '0.5px',
-                      color: feat.accentColor,
-                      textTransform: 'uppercase',
                     }}
                   >
                     {feat.tag}
@@ -176,12 +200,11 @@ export function Features() {
 
                 <h3
                   style={{
-                    fontSize: '1.25rem',
+                    fontSize: '1.35rem',
                     fontWeight: 800,
                     color: '#0A1B38',
-                    letterSpacing: '-0.3px',
-                    margin: '0 0 10px 0',
-                    lineHeight: 1.3,
+                    letterSpacing: '-0.4px',
+                    margin: '0 0 10px',
                   }}
                 >
                   {feat.title}
@@ -189,75 +212,82 @@ export function Features() {
 
                 <p
                   style={{
+                    fontSize: '0.92rem',
                     color: '#64748B',
-                    fontSize: '0.88rem',
-                    lineHeight: 1.55,
-                    marginBottom: '22px',
+                    lineHeight: 1.6,
+                    margin: '0 0 24px',
                   }}
                 >
                   {feat.desc}
                 </p>
 
-                <div
+                <ul
                   style={{
-                    borderTop: '1px solid #E2E8F0',
-                    paddingTop: '16px',
-                    marginBottom: '24px',
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '0 0 28px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
                   }}
                 >
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      padding: 0,
-                      margin: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                    }}
-                  >
-                    {feat.highlights.map((item, hIdx) => (
-                      <li
-                        key={hIdx}
-                        style={{
-                          fontSize: '0.84rem',
-                          color: '#334155',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            background: feat.accentColor,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  {feat.highlights.map((item, idx) => (
+                    <li
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        fontSize: '0.86rem',
+                        color: '#334155',
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      <span style={{ color: feat.accentColor, fontWeight: 800, fontSize: '0.95rem', flexShrink: 0 }}>
+                        ✓
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <div>
-                <Link
-                  href={feat.linkHref}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontSize: '0.88rem',
-                    fontWeight: 700,
-                    color: feat.accentColor,
-                    textDecoration: 'none',
-                  }}
-                >
-                  <span>{feat.linkText}</span>
-                  <span>&rarr;</span>
-                </Link>
+                {feat.ctaHref.startsWith('#') ? (
+                  <a
+                    href={feat.ctaHref}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      color: feat.accentColor,
+                      fontWeight: 700,
+                      fontSize: '0.92rem',
+                      textDecoration: 'none',
+                      padding: '6px 0',
+                    }}
+                  >
+                    <span>{feat.ctaText}</span>
+                    <span>&rarr;</span>
+                  </a>
+                ) : (
+                  <Link
+                    href={feat.ctaHref}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      color: feat.accentColor,
+                      fontWeight: 700,
+                      fontSize: '0.92rem',
+                      textDecoration: 'none',
+                      padding: '6px 0',
+                    }}
+                  >
+                    <span>{feat.ctaText}</span>
+                    <span>&rarr;</span>
+                  </Link>
+                )}
               </div>
             </div>
           ))}

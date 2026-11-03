@@ -8,6 +8,7 @@ import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { ResumeBuilder } from '@/components/ResumeBuilder';
 import { HowItWorks } from '@/components/HowItWorks';
 import { Features } from '@/components/Features';
+import { CategoriesSection } from '@/components/CategoriesSection';
 import { PricingSection } from '@/components/PricingSection';
 import { FaqSection } from '@/components/FaqSection';
 import { Footer } from '@/components/Footer';
@@ -88,6 +89,9 @@ export default function Home() {
 
             {/* 3. Core Architectural Features */}
             <Features />
+
+            {/* 3.1 Curated Assessment Categories */}
+            <CategoriesSection />
 
             {/* 4. Transparent Pro Pricing & Plans */}
             <PricingSection />

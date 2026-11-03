@@ -59,22 +59,6 @@ export default function AssessHubPage() {
     }
   };
 
-  const fillDemoCandidate = () => {
-    if (process.env.NODE_ENV === 'production') return;
-    setRole('candidate');
-    setEmail('candidate@struct.careers');
-    setPassword('CandidatePass123!');
-    setError(null);
-  };
-
-  const fillDemoAdmin = () => {
-    if (process.env.NODE_ENV === 'production') return;
-    setRole('admin');
-    setEmail('admin@struct.careers');
-    setPassword('TalvynAdmin2026!');
-    setError(null);
-  };
-
   return (
     <div style={{ minHeight: '100vh', background: 'var(--brand-bg, #F5F3EE)', color: '#0F172A', display: 'flex', flexDirection: 'column' }}>
       {/* Top Header */}
@@ -113,8 +97,8 @@ export default function AssessHubPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/portal" style={{ fontSize: '0.88rem', color: '#0284c7', textDecoration: 'none', fontWeight: 700 }}>
-              AI Interviews &amp; Plans &rarr;
+            <Link href="/dashboard" style={{ fontSize: '0.88rem', color: '#0284c7', textDecoration: 'none', fontWeight: 700 }}>
+              Mock Assessments &rarr;
             </Link>
             <Link href="/" style={{ fontSize: '0.88rem', color: '#475569', textDecoration: 'none', fontWeight: 600 }}>
               &larr; Platform Home
@@ -323,69 +307,31 @@ export default function AssessHubPage() {
                 {role === 'admin' ? (
                   <span>
                     Need institution or recruiter credentials?{' '}
-                    <Link href="/sign-up" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
+                    <Link href="/register" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
                       Register Organization &rarr;
                     </Link>
                   </span>
                 ) : (
-                  <span>
-                    New student?{' '}
-                    <Link href="/sign-up" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
-                      Create free account &rarr;
-                    </Link>
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span>
+                      Have an assigned examination?{' '}
+                      <Link href="/assess/login" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
+                        Assigned Exam Login &rarr;
+                      </Link>
+                    </span>
+                    <span>
+                      New student?{' '}
+                      <Link href="/register" style={{ color: '#0284C7', fontWeight: 700, textDecoration: 'none' }}>
+                        Create free mock account &rarr;
+                      </Link>
+                    </span>
+                  </div>
                 )}
               </div>
             </form>
 
-            {/* Quick Demo Fill Buttons - Disabled in production */}
-            {process.env.NODE_ENV !== 'production' && (
-              <div style={{
-                marginTop: '28px',
-                paddingTop: '20px',
-                borderTop: '1px dashed #E2E8F0',
-              }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
-                  Local Testing Autofill (Non-Production Only)
-                </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={fillDemoCandidate}
-                    style={{
-                      flex: 1,
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid #BAE6FD',
-                      background: '#F0F9FF',
-                      color: '#0369A1',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Fill Demo Candidate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={fillDemoAdmin}
-                    style={{
-                      flex: 1,
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid #CBD5E1',
-                      background: '#F8FAFC',
-                      color: '#0F172A',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Fill Demo Admin
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Non-production safety check */}
+            {process.env.NODE_ENV !== 'production' && null}
           </div>
 
           {/* Value Props & Information Cards */}

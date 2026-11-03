@@ -43,10 +43,15 @@ export default function SignInClient() {
         localStorage.setItem('struct_user_role', data.user.role || 'candidate');
       }
 
-      if (data.user.role === 'admin' || data.user.role === 'super_admin') {
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const customRedirect = params?.get('redirect_url') || params?.get('redirect');
+
+      if (customRedirect) {
+        router.push(customRedirect);
+      } else if (data.user.role === 'admin' || data.user.role === 'super_admin') {
         router.push('/assess/admin');
       } else {
-        router.push('/portal');
+        router.push('/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'Unable to connect to authentication server. Please try again.');

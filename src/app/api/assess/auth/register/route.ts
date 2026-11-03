@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         college: cleanCollege,
         department: cleanDepartment,
       },
-      redirectUrl: '/portal',
+      redirectUrl: '/dashboard',
     });
 
     const isProd = process.env.NODE_ENV === 'production';

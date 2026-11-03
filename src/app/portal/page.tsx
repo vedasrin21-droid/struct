@@ -12,6 +12,8 @@ export default function IndividualPortal() {
   const [checkoutMsg, setCheckoutMsg] = useState<string | null>(null);
   const [checkoutErr, setCheckoutErr] = useState<string | null>(null);
 
+  const [userRole, setUserRole] = useState<string>('candidate');
+
   const fetchCredits = (email: string) => {
     fetch(`/api/entitlements/balance?email=${encodeURIComponent(email)}`)
       .then(r => r.json())
@@ -24,14 +26,52 @@ export default function IndividualPortal() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const email = localStorage.getItem('struct_user_email') || 'candidate@structonline.in';
-      const name = localStorage.getItem('struct_user_name') || '';
-      setUserEmail(email);
-      setUserName(name);
-      fetchCredits(email);
-    }
+    // 1. Verify active session with authoritative server cookie
+    fetch('/api/assess/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.authenticated && data.user) {
+          setUserEmail(data.user.email);
+          setUserName(data.user.name || '');
+          setUserRole(data.user.role || 'candidate');
+          fetchCredits(data.user.email);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('struct_user_email', data.user.email);
+            localStorage.setItem('struct_user_name', data.user.name || '');
+            localStorage.setItem('struct_user_role', data.user.role || 'candidate');
+          }
+        } else if (typeof window !== 'undefined') {
+          const email = localStorage.getItem('struct_user_email') || '';
+          const name = localStorage.getItem('struct_user_name') || '';
+          setUserEmail(email);
+          setUserName(name);
+          if (email) fetchCredits(email);
+        }
+      })
+      .catch(() => {
+        if (typeof window !== 'undefined') {
+          const email = localStorage.getItem('struct_user_email') || '';
+          const name = localStorage.getItem('struct_user_name') || '';
+          setUserEmail(email);
+          setUserName(name);
+          if (email) fetchCredits(email);
+        }
+      });
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/assess/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('struct_user_email');
+      localStorage.removeItem('struct_user_name');
+      localStorage.removeItem('struct_user_role');
+    }
+    window.location.href = '/';
+  };
 
   const handleBuyPremium = async () => {
     setCheckoutErr(null);
@@ -139,7 +179,7 @@ export default function IndividualPortal() {
               </div>
             </div>
             <Link
-              href="/assess"
+              href="/dashboard"
               style={{
                 background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
                 color: '#FFFFFF',
@@ -151,7 +191,78 @@ export default function IndividualPortal() {
                 boxShadow: '0 2px 8px rgba(10, 27, 56, 0.15)'
               }}
             >
-              Enter Exams &rarr;
+              Mock Dashboard &rarr;
+            </Link>
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: '#F8FAFC',
+                border: '1px solid #CBD5E1',
+                padding: '8px 14px',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#475569',
+                cursor: 'pointer',
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+
+        {/* Candidate Dashboard Reassurance Banner */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #0A1B38 0%, #17386D 100%)',
+            color: '#FFFFFF',
+            borderRadius: 14,
+            padding: '18px 24px',
+            marginBottom: 24,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 16,
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#93C5FD', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Candidate Assessment Platform
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 4 }}>
+              Looking for your practice mock assessments or assigned examinations?
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Link
+              href="/dashboard"
+              style={{
+                background: '#0284C7',
+                color: '#FFFFFF',
+                padding: '9px 18px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Candidate Dashboard &rarr;
+            </Link>
+            <Link
+              href="/assess/login"
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                color: '#FFFFFF',
+                padding: '9px 18px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                textDecoration: 'none',
+                border: '1px solid rgba(255,255,255,0.2)',
+              }}
+            >
+              Assigned Exam Login &rarr;
             </Link>
           </div>
         </div>

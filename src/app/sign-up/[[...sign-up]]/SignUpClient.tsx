@@ -66,7 +66,9 @@ export default function SignUpClient() {
         localStorage.setItem('struct_user_role', data.user.role);
       }
 
-      router.push(data.redirectUrl || '/portal');
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const target = params?.get('redirect_url') || params?.get('redirect') || data.redirectUrl || '/dashboard';
+      router.push(target);
     } catch (err: any) {
       setError(err.message || 'Unable to complete registration. Please try again.');
     } finally {

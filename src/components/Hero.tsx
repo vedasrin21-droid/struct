@@ -98,7 +98,7 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                 marginBottom: '24px',
               }}
             >
-              Prove Your Skills. Build Your Future.
+              Practice Smarter. Perform Better. Get Hired.
             </h1>
 
             {/* Platform Subtitle */}
@@ -112,12 +112,12 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                 maxWidth: '650px',
               }}
             >
-              Build a better resume, test your skills, and prepare for real opportunities. STRUCT helps you understand where you stand, improve your abilities, and show the world what you can do.
+              STRUCT helps students prepare for hiring assessments through structured mock tests, skill-based practice, and real examination experiences.
             </p>
 
-            {/* Aesthetic Redesigned Button System */}
+            {/* Aesthetic Action Suite */}
             <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '16px', maxWidth: '100%' }}>
-              {/* Tier 1: Primary Action Pair */}
+              {/* Primary Action Pair */}
               <div
                 style={{
                   display: 'flex',
@@ -127,7 +127,7 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                 }}
               >
                 <Link
-                  href="/assess"
+                  href="/dashboard"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -145,12 +145,12 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <span>Take Proctored Assessment</span>
+                  <span>Explore Mock Assessments</span>
                   <span style={{ fontSize: '1.15rem' }}>&rarr;</span>
                 </Link>
 
                 <Link
-                  href="/assess"
+                  href="/register"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -168,16 +168,36 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <span>Practice Assessments</span>
+                  <span>Create Your Account</span>
                 </Link>
               </div>
 
-              {/* Tier 2: Aesthetic Integrated Utility Console (Center Aligned) */}
+              {/* Dedicated Assigned Exam Link */}
+              <div style={{ marginTop: '4px' }}>
+                <Link
+                  href="/assess/login"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: '#0284C7',
+                    fontWeight: 700,
+                    fontSize: '0.94rem',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>Have an Assigned Examination? Login Here</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
+
+              {/* Tier 2: Aesthetic Integrated Utility Console */}
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'center',
+                  justifyContent: 'flex-start',
                   width: '100%',
+                  marginTop: '8px',
                 }}
               >
                 <div
@@ -190,42 +210,26 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                     borderRadius: '11px',
                     padding: '8px 14px',
                     boxShadow: '0 4px 18px -2px rgba(18, 51, 107, 0.06)',
-                    gap: '9px',
+                    gap: '12px',
                     width: 'fit-content',
                     flexWrap: 'wrap',
                   }}
                 >
-                  <a
-                    href="#pricing"
+                  <Link
+                    href="/resume-builder"
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      fontSize: '0.9rem',
+                      fontSize: '0.88rem',
                       fontWeight: 600,
                       color: 'var(--brand-dark)',
                       textDecoration: 'none',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      transition: 'all 0.15s ease',
+                      padding: '3px 6px',
                     }}
                   >
-                    <span
-                      style={{
-                        background: 'var(--brand-primary)',
-                        color: '#FFFFFF',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        padding: '2.5px 7px',
-                        borderRadius: '4px',
-                        letterSpacing: '0.5px',
-                      }}
-                    >
-                      PREMIUM
-                    </span>
-                    <span>AI Resume Pack for <strong>₹49</strong></span>
-                    <span style={{ color: 'var(--brand-primary)', fontWeight: 700 }}>&rarr;</span>
-                  </a>
+                    <span>Free Resume Builder &rarr;</span>
+                  </Link>
 
                   <span style={{ width: '1px', height: '17px', background: 'rgba(18, 51, 107, 0.18)' }} />
 
@@ -239,19 +243,14 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      fontSize: '0.9rem',
+                      fontSize: '0.88rem',
                       fontWeight: 600,
-                      color: 'var(--brand-primary)',
+                      color: 'var(--brand-dark)',
                       textDecoration: 'none',
-                      padding: '3px 12px',
-                      borderRadius: '6px',
-                      background: 'var(--brand-soft-blue-light)',
-                      transition: 'all 0.15s ease',
-                      cursor: 'pointer',
+                      padding: '3px 6px',
                     }}
                   >
-                    <span>Free ATS Resume Scan</span>
-                    <span style={{ fontSize: '1rem' }}>&darr;</span>
+                    <span>ATS Resume Checker &rarr;</span>
                   </a>
                 </div>
               </div>
