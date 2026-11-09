@@ -63,6 +63,13 @@ export default function EcellStartPage() {
   }, [router]);
 
   const handleStartExam = async () => {
+    // 1. Immediately trigger fullscreen on direct user click gesture
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch {}
+
     setError(null);
     setStarting(true);
 

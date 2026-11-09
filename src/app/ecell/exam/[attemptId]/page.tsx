@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { obfuscateForGoogle, getPoisonedClipboardPayload } from '@/lib/assess/antiCheat';
 
 interface Question {
   id: string;
@@ -31,6 +32,7 @@ export default function ExamInterfacePage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [department, setDepartment] = useState('');
+  const [candidateEmail, setCandidateEmail] = useState('candidate@talvyn.com');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, SavedAnswer>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -39,30 +41,76 @@ export default function ExamInterfacePage({
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
 
+  // Fullscreen & Anti-Cheat Proctoring States
+  const [isFullscreen, setIsFullscreen] = useState(true);
+  const [showFullscreenModal, setShowFullscreenModal] = useState(false);
+  const [fullscreenViolations, setFullscreenViolations] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showToast = (msg: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastMessage(msg);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  };
+
+  const enterFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        }
+      }
+      setIsFullscreen(true);
+      setShowFullscreenModal(false);
+    } catch {
+      showToast('⚠️ Full-screen access is required by proctors to continue your assessment.');
+    }
+  };
 
   useEffect(() => {
     async function loadAttempt() {
       try {
-        const res = await fetch(`/api/ecell/attempts/${attemptId}`);
-        if (!res.ok) {
-          if (res.status === 401) {
+        const [attRes, meRes] = await Promise.all([
+          fetch(`/api/ecell/attempts/${attemptId}`),
+          fetch('/api/ecell/me').catch(() => null),
+        ]);
+
+        if (!attRes.ok) {
+          if (attRes.status === 401) {
             router.push('/ecell/login');
             return;
           }
           throw new Error('Failed to load examination attempt');
         }
 
-        const data = await res.json();
+        const data = await attRes.json();
         if (data.isSubmitted) {
           router.push('/ecell/completed');
           return;
+        }
+
+        if (meRes && meRes.ok) {
+          const meData = await meRes.json();
+          if (meData.student?.email) {
+            setCandidateEmail(meData.student.email);
+          }
         }
 
         setDepartment(data.department);
         setQuestions(data.questions || []);
         setAnswers(data.savedAnswers || {});
         setRemainingSeconds(data.remainingSeconds);
+
+        // Enforce Fullscreen on start
+        if (!document.fullscreenElement) {
+          setShowFullscreenModal(true);
+          setIsFullscreen(false);
+        }
       } catch (err: any) {
         setError(err.message || 'Error loading examination.');
       } finally {
@@ -106,6 +154,99 @@ export default function ExamInterfacePage({
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [loading, remainingSeconds]);
+
+  // Comprehensive Anti-AI & Proctoring Signals
+  useEffect(() => {
+    if (!attemptId) return;
+
+    const sendSecuritySignal = (eventType: string, severity: 'low' | 'medium' | 'high', details: string) => {
+      fetch('/api/assess/candidate/security-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attemptId,
+          examId: 'exam_ecell_round1_2026',
+          eventType,
+          severity,
+          details,
+        }),
+      }).catch(() => {});
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        showToast('⚠️ Proctored Alert: Tab switch or app blur detected and logged.');
+        sendSecuritySignal('tab_switch', 'medium', 'Candidate switched tabs or minimized window');
+      }
+    };
+
+    const handleWindowBlur = () => {
+      sendSecuritySignal('window_blur', 'low', 'Window lost focus');
+    };
+
+    const handleFullscreenChange = () => {
+      const inFs = Boolean(document.fullscreenElement);
+      setIsFullscreen(inFs);
+      if (!inFs) {
+        setFullscreenViolations((prev) => {
+          const next = prev + 1;
+          sendSecuritySignal('fullscreen_exit', 'high', `Candidate exited full-screen mode (Violation #${next})`);
+          return next;
+        });
+        setShowFullscreenModal(true);
+        showToast('⚠️ Full-screen exit detected! Return to full screen to continue.');
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block common inspect & copy keys
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'i', 'C', 'c', 'J', 'j'].includes(e.key)) ||
+        (e.ctrlKey && ['u', 'U', 's', 'S', 'p', 'P'].includes(e.key)) ||
+        (e.ctrlKey && (e.key === 'c' || e.key === 'C')) ||
+        (e.ctrlKey && (e.key === 'v' || e.key === 'V'))
+      ) {
+        e.preventDefault();
+        showToast('⚠️ Inspection shortcuts, copy, and paste are strictly disabled.');
+        sendSecuritySignal('dev_tools_attempt', 'high', `Candidate key shortcut blocked: ${e.key}`);
+      }
+    };
+
+    const handleCopyOrCut = (e: ClipboardEvent) => {
+      e.preventDefault();
+      const poison = getPoisonedClipboardPayload(candidateEmail, 'ECELL-R1-2026');
+      if (e.clipboardData) {
+        e.clipboardData.setData('text/plain', poison);
+      }
+      showToast('⚠️ Copying is strictly prohibited and logged to proctors.');
+      sendSecuritySignal('copy_attempt', 'high', 'Candidate attempted to copy question content');
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      showToast('Right-click context menu is disabled during proctored examinations.');
+      sendSecuritySignal('right_click_attempt', 'medium', 'Candidate attempted right-click context menu');
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('copy', handleCopyOrCut);
+    document.addEventListener('cut', handleCopyOrCut);
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('copy', handleCopyOrCut);
+      document.removeEventListener('cut', handleCopyOrCut);
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, [attemptId, candidateEmail]);
 
   const saveAnswer = async (
     qId: string,
@@ -238,7 +379,13 @@ export default function ExamInterfacePage({
   const currentAnswer = currentQ ? answers[currentQ.id] : null;
 
   return (
-    <div className="ecell-page-wrapper">
+    <div
+      className="ecell-page-wrapper"
+      style={{
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+      }}
+    >
       {/* Top Proctored Header */}
       <header
         style={{
@@ -298,51 +445,36 @@ export default function ExamInterfacePage({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {/* Autosave status indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#94A3B8' }}>
+            {/* Auto-save indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem' }}>
               <span
                 style={{
                   width: '7px',
                   height: '7px',
                   borderRadius: '50%',
                   backgroundColor:
-                    saveStatus === 'saved' ? '#10B981' : saveStatus === 'saving' ? '#F59E0B' : '#EF4444',
+                    saveStatus === 'saved'
+                      ? '#22C55E'
+                      : saveStatus === 'saving'
+                        ? '#F59E0B'
+                        : '#EF4444',
                 }}
               />
-              <span style={{ display: 'none', minWidth: '40px' }} className="sm-inline">
-                {saveStatus === 'saved' ? 'Saved' : saveStatus === 'saving' ? 'Saving...' : 'Error'}
+              <span style={{ color: '#94A3B8', fontWeight: 600 }}>
+                {saveStatus === 'saved' ? 'Saved' : saveStatus === 'saving' ? 'Saving...' : 'Sync error'}
               </span>
             </div>
 
-            {/* Countdown Clock */}
+            {/* Countdown Badge */}
             <div
-              className={`ecell-timer-box ${
-                isTimeDanger
-                  ? 'ecell-timer-danger'
-                  : isTimeCritical
-                  ? 'ecell-timer-warning'
-                  : 'ecell-timer-normal'
-              }`}
+              className={`ecell-timer-badge ${isTimeDanger ? 'danger' : isTimeCritical ? 'critical' : ''}`}
             >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
               <span>{timeFormatted}</span>
             </div>
-
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              style={{
-                padding: '9px 18px',
-                backgroundColor: 'var(--accent-green, #15803D)',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Submit Exam
-            </button>
           </div>
         </div>
       </header>
@@ -433,7 +565,7 @@ export default function ExamInterfacePage({
                 </div>
               </div>
 
-              {/* Question Text */}
+              {/* Question Text (Obfuscated against AI / Google scrapers) */}
               <h2
                 style={{
                   fontFamily: "'Space Grotesk', -apple-system, sans-serif",
@@ -442,12 +574,14 @@ export default function ExamInterfacePage({
                   color: '#0A1B38',
                   lineHeight: 1.5,
                   margin: '0 0 28px',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
                 }}
               >
-                {currentQ.text}
+                {obfuscateForGoogle(currentQ.text)}
               </h2>
 
-              {/* 4 Options */}
+              {/* 4 Options (Obfuscated against AI tokenizers) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
                 {currentQ.options.map((optText, optIdx) => {
                   const isSelected = currentAnswer?.selectedOptionIndex === optIdx;
@@ -458,6 +592,10 @@ export default function ExamInterfacePage({
                       key={optIdx}
                       onClick={() => handleSelectOption(optIdx)}
                       className={`ecell-mcq-choice ${isSelected ? 'active' : ''}`}
+                      style={{
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                      }}
                     >
                       <div className="ecell-mcq-letter">
                         {label}
@@ -468,9 +606,11 @@ export default function ExamInterfacePage({
                           fontWeight: isSelected ? 700 : 500,
                           color: '#0A1B38',
                           lineHeight: 1.5,
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
                         }}
                       >
-                        {optText}
+                        {obfuscateForGoogle(optText)}
                       </span>
                     </div>
                   );
@@ -522,39 +662,75 @@ export default function ExamInterfacePage({
           )}
         </div>
 
-        {/* Right Column: Question Palette */}
+        {/* Right Column: Palette & Submission */}
         <div className="ecell-exam-sidebar">
-          <div className="ecell-card-institutional" style={{ padding: '24px 20px' }}>
-            <div
+          <div className="ecell-card-institutional" style={{ padding: '24px' }}>
+            <h3
               style={{
-                fontSize: '0.74rem',
+                fontSize: '0.82rem',
                 fontWeight: 800,
-                letterSpacing: '0.6px',
                 textTransform: 'uppercase',
-                color: '#8993A4',
+                letterSpacing: '0.6px',
+                color: '#0A1B38',
                 marginBottom: '16px',
               }}
             >
               Question Palette
-            </div>
+            </h3>
 
-            <div className="ecell-palette-grid" style={{ marginBottom: '20px' }}>
+            {/* Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gap: '8px',
+                marginBottom: '24px',
+              }}
+            >
               {questions.map((q, idx) => {
-                const ans = answers[q.id];
-                const isAnswered = ans?.selectedOptionIndex !== null && ans?.selectedOptionIndex !== undefined;
-                const isMarked = ans?.isMarkedForReview || false;
+                const a = answers[q.id];
                 const isCurrent = idx === currentIndex;
+                const isAns = a?.selectedOptionIndex !== null && a?.selectedOptionIndex !== undefined;
+                const isMark = a?.isMarkedForReview;
 
-                let stateClass = 'unanswered';
-                if (isCurrent) stateClass = 'current';
-                else if (isMarked) stateClass = 'marked';
-                else if (isAnswered) stateClass = 'answered';
+                let bg = '#FFFFFF';
+                let color = '#5E6C84';
+                let border = '1.5px solid #E4E2DC';
+
+                if (isCurrent) {
+                  border = '2px solid #0284C7';
+                  bg = '#EEF4FC';
+                  color = '#0284C7';
+                }
+
+                if (isMark) {
+                  bg = 'var(--accent-amber-bg)';
+                  color = 'var(--accent-amber)';
+                  border = '1.5px solid var(--accent-amber-border)';
+                } else if (isAns) {
+                  bg = 'var(--accent-green-bg)';
+                  color = 'var(--accent-green)';
+                  border = '1.5px solid var(--accent-green-border)';
+                }
 
                 return (
                   <button
                     key={q.id}
                     onClick={() => setCurrentIndex(idx)}
-                    className={`ecell-palette-btn ${stateClass}`}
+                    style={{
+                      aspectRatio: '1',
+                      borderRadius: '8px',
+                      backgroundColor: bg,
+                      color: color,
+                      border: border,
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
                   >
                     {idx + 1}
                   </button>
@@ -563,18 +739,18 @@ export default function ExamInterfacePage({
             </div>
 
             {/* Legend */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.78rem', borderTop: '1px solid #F1F5F9', paddingTop: '16px', marginBottom: '22px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#5E6C84' }}>Answered:</span>
-                <strong style={{ color: 'var(--accent-green, #15803D)' }}>{answeredCount}</strong>
+            <div style={{ fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--accent-green-bg)', border: '1px solid var(--accent-green-border)' }} />
+                <span>Answered ({answeredCount})</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#5E6C84' }}>Marked for Review:</span>
-                <strong style={{ color: 'var(--accent-amber, #B45309)' }}>{markedCount}</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'var(--accent-amber-bg)', border: '1px solid var(--accent-amber-border)' }} />
+                <span>Marked for Review ({markedCount})</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#5E6C84' }}>Unanswered:</span>
-                <strong style={{ color: '#0A1B38' }}>{unansweredCount}</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#FFFFFF', border: '1px solid #E4E2DC' }} />
+                <span>Unanswered ({unansweredCount})</span>
               </div>
             </div>
 
@@ -673,6 +849,127 @@ export default function ExamInterfacePage({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Fullscreen Enforcer Modal */}
+      {showFullscreenModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(7, 21, 46, 0.96)',
+            backdropFilter: 'blur(16px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '520px',
+              width: '100%',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '24px',
+              padding: '38px 34px',
+              textAlign: 'center',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              border: '2px solid #0284C7',
+            }}
+          >
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                backgroundColor: '#EEF4FC',
+                color: '#12336B',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px',
+                fontSize: '1.8rem',
+              }}
+            >
+              🛡️
+            </div>
+
+            <h2
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: '1.5rem',
+                fontWeight: 800,
+                color: '#0A1B38',
+                marginBottom: '12px',
+              }}
+            >
+              Full-Screen Proctored Mode Required
+            </h2>
+
+            <p style={{ color: '#5E6C84', fontSize: '0.92rem', lineHeight: 1.6, marginBottom: '24px' }}>
+              To ensure academic integrity, this recruitment examination must be completed exclusively in full-screen mode. 
+              Tab switching, minimizing the window, or using external tools is automatically logged and reported to proctors.
+            </p>
+
+            {fullscreenViolations > 0 && (
+              <div
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: '#FEF2F2',
+                  border: '1.5px solid #FCA5A5',
+                  color: '#991B1B',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  marginBottom: '22px',
+                }}
+              >
+                ⚠️ Full-screen exit detected (Incident #{fullscreenViolations}). All events are recorded in your proctor dossier.
+              </div>
+            )}
+
+            <button
+              onClick={enterFullscreen}
+              className="ecell-btn-primary"
+              style={{
+                padding: '15px 32px',
+                fontSize: '1rem',
+                borderRadius: '12px',
+                width: '100%',
+                boxShadow: '0 10px 25px -4px rgba(18, 51, 107, 0.4)',
+              }}
+            >
+              Enter Full Screen &amp; Continue Assessment
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Proctoring Notification Toast */}
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            backgroundColor: '#0A1B38',
+            color: '#FFFFFF',
+            padding: '14px 22px',
+            borderRadius: '12px',
+            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
+            border: '1.5px solid #F59E0B',
+            zIndex: 10000,
+            fontSize: '0.88rem',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            maxWidth: '420px',
+          }}
+        >
+          <span>{toastMessage}</span>
         </div>
       )}
 
