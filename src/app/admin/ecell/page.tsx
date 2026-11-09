@@ -721,21 +721,6 @@ export default function AdminEcellPage() {
                     ))
                   )}
                 </tbody>
-                          >
-                            {s.attemptStatus === 'submitted'
-                              ? 'Submitted'
-                              : s.attemptStatus === 'in_progress'
-                                ? 'In Progress'
-                                : 'Not Started'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '14px 18px', fontWeight: 800, color: '#0A1B38' }}>
-                          {s.score !== null ? `${s.score} / 20` : '—'}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
               </table>
             </div>
           </div>
