@@ -161,6 +161,7 @@ CREATE TABLE IF NOT EXISTS exams (
   status VARCHAR(16) NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'published', 'closed')),
   results_released SMALLINT NOT NULL DEFAULT 0,
   instructions TEXT DEFAULT '',
+  custom_post_exam_question TEXT DEFAULT '',
   created_at BIGINT NOT NULL,
   updated_at BIGINT NOT NULL
 );
@@ -375,6 +376,8 @@ CREATE TABLE IF NOT EXISTS exam_feedback (
   improvement_suggestions TEXT,
   would_recommend VARCHAR(20),
   marketing_consent BOOLEAN DEFAULT FALSE,
+  custom_question_prompt TEXT DEFAULT '',
+  custom_question_response TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -382,5 +385,39 @@ CREATE INDEX IF NOT EXISTS idx_exam_feedback_exam_id ON exam_feedback(exam_id);
 CREATE INDEX IF NOT EXISTS idx_exam_feedback_email ON exam_feedback(candidate_email);
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS organization_id VARCHAR(64) REFERENCES organizations(id) ON DELETE SET NULL;
+ALTER TABLE exams ADD COLUMN IF NOT EXISTS custom_post_exam_question TEXT DEFAULT '';
+ALTER TABLE exam_feedback ADD COLUMN IF NOT EXISTS custom_question_prompt TEXT DEFAULT '';
+ALTER TABLE exam_feedback ADD COLUMN IF NOT EXISTS custom_question_response TEXT DEFAULT '';
+ALTER TABLE exam_feedback ADD COLUMN IF NOT EXISTS question_quality_rating INTEGER DEFAULT 5;
+ALTER TABLE exam_feedback ADD COLUMN IF NOT EXISTS difficulty_level VARCHAR(32) DEFAULT 'moderate';
+ALTER TABLE exam_feedback ADD COLUMN IF NOT EXISTS department VARCHAR(128) DEFAULT '';
+ALTER TABLE attempts ADD COLUMN IF NOT EXISTS department VARCHAR(128);
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS question_type VARCHAR(64) DEFAULT 'department';
+
+-- 24. ECELL Departments
+CREATE TABLE IF NOT EXISTS ecell_departments (
+  id VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(128) NOT NULL,
+  code VARCHAR(64) UNIQUE NOT NULL,
+  description TEXT DEFAULT '',
+  order_index INTEGER DEFAULT 0,
+  is_active SMALLINT DEFAULT 1
+);
+
+-- 25. STRUCT Launch Waitlist Subscribers
+CREATE TABLE IF NOT EXISTS waitlist_subscribers (
+  id VARCHAR(64) PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  name VARCHAR(255) DEFAULT '',
+  college VARCHAR(255) DEFAULT '',
+  source VARCHAR(64) DEFAULT 'general',
+  consent SMALLINT NOT NULL DEFAULT 1,
+  created_at BIGINT NOT NULL
+);
+
+ALTER TABLE waitlist_subscribers ADD COLUMN IF NOT EXISTS college VARCHAR(255) DEFAULT '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_waitlist_email_unique ON waitlist_subscribers (LOWER(email));
+CREATE INDEX IF NOT EXISTS idx_waitlist_source ON waitlist_subscribers (source);
 
 

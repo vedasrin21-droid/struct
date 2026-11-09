@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { StructLogo } from '@/components/StructLogo';
 
 export default function SignInClient() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function SignInClient() {
           setExistingEmail(data.user.email);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,45 +111,8 @@ export default function SignInClient() {
           justifyContent: 'space-between'
         }}>
           {/* Brand Logo & Name matching Home page */}
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '9px',
-              background: 'linear-gradient(135deg, #0A1B38 0%, #0284C7 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontWeight: 800,
-              fontSize: '1.15rem',
-              letterSpacing: '-0.5px',
-              boxShadow: '0 4px 10px rgba(10, 27, 56, 0.15)',
-              flexShrink: 0,
-            }}>
-              S
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{
-                fontFamily: "'Space Grotesk', -apple-system, sans-serif",
-                fontSize: '1.25rem',
-                fontWeight: 800,
-                letterSpacing: '-0.5px',
-                color: '#0A1B38',
-                lineHeight: 1.1,
-              }}>
-                STRUCT
-              </span>
-              <span style={{
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                letterSpacing: '0.8px',
-                textTransform: 'uppercase',
-                color: '#0284C7',
-              }}>
-                Assessments &amp; Hiring Platform
-              </span>
-            </div>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <StructLogo size={36} subtitle="Assessments & Hiring Platform" />
           </Link>
 
           {/* Right Action */}

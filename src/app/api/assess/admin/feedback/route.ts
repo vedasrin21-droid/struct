@@ -17,7 +17,7 @@ export async function GET(request: Request) {
         fb.overall_rating, fb.navigation_rating,
         fb.technical_issues, fb.liked_aspects,
         fb.improvement_suggestions, fb.would_recommend,
-        fb.marketing_consent, fb.created_at
+        fb.marketing_consent, fb.custom_question_prompt, fb.custom_question_response, fb.created_at
       FROM exam_feedback fb
       LEFT JOIN exams e ON e.id = fb.exam_id
     `;
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
     if (format === 'csv') {
       const rows = [
-        ['ID', 'Exam Title', 'Candidate Name', 'Candidate Email', 'Overall (1-5)', 'Navigation (1-5)', 'Technical Issues', 'Liked Aspects', 'Improvements', 'Would Recommend', 'Marketing Consent', 'Submitted At']
+        ['ID', 'Exam Title', 'Candidate Name', 'Candidate Email', 'Overall (1-5)', 'Navigation (1-5)', 'Technical Issues', 'Liked Aspects', 'Improvements', 'Would Recommend', 'Custom Question Prompt', 'Candidate Custom Response', 'Marketing Consent', 'Submitted At']
       ];
 
       for (const item of feedbackList) {
@@ -50,6 +50,8 @@ export async function GET(request: Request) {
           `"${(item.liked_aspects || '').replace(/"/g, '""')}"`,
           `"${(item.improvement_suggestions || '').replace(/"/g, '""')}"`,
           `"${item.would_recommend}"`,
+          `"${(item.custom_question_prompt || '').replace(/"/g, '""')}"`,
+          `"${(item.custom_question_response || '').replace(/"/g, '""')}"`,
           item.marketing_consent ? 'Yes' : 'No',
           `"${new Date(item.created_at).toISOString()}"`
         ]);

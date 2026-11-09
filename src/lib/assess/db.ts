@@ -60,8 +60,8 @@ function getPgPool(): pg.Pool {
   const pool = new Pool({
     connectionString: databaseUrl,
     max: poolMax,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 15000,
     ssl:
       process.env.PG_SSL === 'false'
         ? false
@@ -131,11 +131,27 @@ class PostgresClient implements DbClient {
   }
 
   async query<T = any>(sql: string, params: any[] = []): Promise<QueryResult<T>> {
-    const res = await this.pool.query(sql, params);
-    return {
-      rows: res.rows as T[],
-      rowCount: res.rowCount || 0,
-    };
+    try {
+      const res = await this.pool.query(sql, params);
+      return {
+        rows: res.rows as T[],
+        rowCount: res.rowCount || 0,
+      };
+    } catch (err: any) {
+      if (err?.message && (err.message.includes('Connection terminated') || err.message.includes('timeout'))) {
+        const client = await this.pool.connect();
+        try {
+          const res = await client.query(sql, params);
+          return {
+            rows: res.rows as T[],
+            rowCount: res.rowCount || 0,
+          };
+        } finally {
+          client.release(true);
+        }
+      }
+      throw err;
+    }
   }
 
   async queryOne<T = any>(sql: string, params: any[] = []): Promise<T | null> {
@@ -144,8 +160,21 @@ class PostgresClient implements DbClient {
   }
 
   async execute(sql: string, params: any[] = []): Promise<{ rowCount: number }> {
-    const res = await this.pool.query(sql, params);
-    return { rowCount: res.rowCount || 0 };
+    try {
+      const res = await this.pool.query(sql, params);
+      return { rowCount: res.rowCount || 0 };
+    } catch (err: any) {
+      if (err?.message && (err.message.includes('Connection terminated') || err.message.includes('timeout'))) {
+        const client = await this.pool.connect();
+        try {
+          const res = await client.query(sql, params);
+          return { rowCount: res.rowCount || 0 };
+        } finally {
+          client.release(true);
+        }
+      }
+      throw err;
+    }
   }
 
   async transaction<T>(fn: (client: DbClient) => Promise<T>): Promise<T> {
@@ -291,6 +320,13 @@ async function initPgSchema(pool: pg.Pool): Promise<void> {
       await pool.query(sql);
       console.log('[PostgreSQL] Database schema auto-bootstrap verified.');
     }
+    // Safe idempotent column additions for Postgres
+    await pool.query(`
+      ALTER TABLE exams ADD COLUMN IF NOT EXISTS custom_post_exam_question TEXT DEFAULT '';
+      ALTER TABLE exam_feedback ADD COLUMN IF NOT EXISTS custom_question_prompt TEXT DEFAULT '';
+      ALTER TABLE exam_feedback ADD COLUMN IF NOT EXISTS custom_question_response TEXT DEFAULT '';
+      ALTER TABLE waitlist_subscribers ADD COLUMN IF NOT EXISTS college VARCHAR(255) DEFAULT '';
+    `);
   } catch (err) {
     console.error('[PostgreSQL Schema Bootstrap Error]', err);
   }
@@ -423,6 +459,7 @@ function initSqliteSchema(db: DatabaseSync) {
       status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'published', 'closed')),
       results_released INTEGER NOT NULL DEFAULT 0,
       instructions TEXT DEFAULT '',
+      custom_post_exam_question TEXT DEFAULT '',
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -672,6 +709,24 @@ function initSqliteSchema(db: DatabaseSync) {
       locked_until INTEGER NOT NULL DEFAULT 0,
       updated_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS exam_feedback (
+      id TEXT PRIMARY KEY,
+      exam_id TEXT NOT NULL,
+      attempt_id TEXT,
+      candidate_email TEXT NOT NULL COLLATE NOCASE,
+      candidate_name TEXT,
+      overall_rating INTEGER NOT NULL,
+      navigation_rating INTEGER NOT NULL,
+      technical_issues TEXT DEFAULT 'none',
+      liked_aspects TEXT DEFAULT '',
+      improvement_suggestions TEXT DEFAULT '',
+      would_recommend TEXT DEFAULT 'yes',
+      marketing_consent INTEGER DEFAULT 0,
+      custom_question_prompt TEXT DEFAULT '',
+      custom_question_response TEXT DEFAULT '',
+      created_at INTEGER NOT NULL
+    );
   `);
 
   // Safe non-destructive column additions
@@ -695,6 +750,51 @@ function initSqliteSchema(db: DatabaseSync) {
   } catch {}
   try {
     db.exec(`ALTER TABLE exams ADD COLUMN is_practice INTEGER DEFAULT 0;`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE exams ADD COLUMN custom_post_exam_question TEXT DEFAULT '';`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE exam_feedback ADD COLUMN custom_question_prompt TEXT DEFAULT '';`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE exam_feedback ADD COLUMN custom_question_response TEXT DEFAULT '';`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE exam_feedback ADD COLUMN question_quality_rating INTEGER DEFAULT 5;`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE exam_feedback ADD COLUMN difficulty_level TEXT DEFAULT 'moderate';`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE exam_feedback ADD COLUMN department TEXT DEFAULT '';`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE attempts ADD COLUMN department TEXT;`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE questions ADD COLUMN question_type TEXT DEFAULT 'department';`);
+  } catch {}
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS ecell_departments (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        code TEXT UNIQUE NOT NULL,
+        description TEXT DEFAULT '',
+        order_index INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1
+      );
+      CREATE TABLE IF NOT EXISTS waitlist_subscribers (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL COLLATE NOCASE,
+        name TEXT DEFAULT '',
+        college TEXT DEFAULT '',
+        source TEXT DEFAULT 'general',
+        consent INTEGER DEFAULT 1,
+        created_at INTEGER NOT NULL
+      );
+    `);
   } catch {}
 
   // Auto-migrate SQLite tables if existing database file has older CHECK constraints

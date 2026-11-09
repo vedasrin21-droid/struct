@@ -10,7 +10,6 @@ interface HeroProps {
 }
 
 export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderClick }: HeroProps) {
-  const [activeSimulatorTab, setActiveSimulatorTab] = useState<'exam' | 'interview' | 'recruiter'>('exam');
   const [testRunCompleted, setTestRunCompleted] = useState(false);
   const [isRunningTests, setIsRunningTests] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -23,7 +22,7 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
           setUserEmail(data.user.email);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleSimulateTests = () => {
@@ -99,6 +98,12 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
           {/* ==================== LEFT COLUMN (COMMANDING HERO) ==================== */}
           <div style={{ textAlign: 'left', maxWidth: '680px' }}>
             {/* Direct, Authoritative Headline */}
+            {/* Direct, Authoritative Headline */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '100px', background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontSize: '0.82rem', fontWeight: 700, marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2563EB' }}></span>
+              ECELL Hiring — Round 1
+            </div>
+
             <h1
               style={{
                 fontFamily: "'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -107,24 +112,25 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                 lineHeight: 1.08,
                 letterSpacing: '-2.2px',
                 color: 'var(--brand-dark)',
-                marginBottom: '24px',
+                marginBottom: '20px',
               }}
             >
-              Practice Smarter. Perform Better. Get Hired.
+              STRUCT.<br />
+              <span style={{ color: '#0284C7' }}>Your next opportunity starts here.</span>
             </h1>
 
             {/* Platform Subtitle */}
             <p
               style={{
-                fontSize: 'clamp(1.14rem, 1.45vw, 1.28rem)',
+                fontSize: 'clamp(1.1rem, 1.4vw, 1.25rem)',
                 color: 'var(--brand-text-muted)',
-                lineHeight: 1.7,
-                marginBottom: '38px',
+                lineHeight: 1.65,
+                marginBottom: '34px',
                 fontWeight: 400,
                 maxWidth: '650px',
               }}
             >
-              STRUCT helps students prepare for hiring assessments through structured mock tests, skill-based practice, and real examination experiences.
+              Official online recruitment assessment for collegiate leadership & execution roles. Experience secure proctoring, live question sequencing, and department-specific evaluations.
             </p>
 
             {/* Aesthetic Action Suite */}
@@ -139,17 +145,17 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                 }}
               >
                 <Link
-                  href="/dashboard"
+                  href="/ecell/login"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '10px',
                     background: 'linear-gradient(135deg, #07152E 0%, #12336B 100%)',
                     color: '#FFFFFF',
-                    padding: '16px 32px',
+                    padding: '16px 34px',
                     borderRadius: '12px',
                     fontWeight: 700,
-                    fontSize: '1.02rem',
+                    fontSize: '1.05rem',
                     textDecoration: 'none',
                     boxShadow: '0 10px 28px -4px rgba(10, 27, 56, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.22)',
                     transition: 'all 0.18s ease',
@@ -157,61 +163,37 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <span>Explore Mock Assessments</span>
+                  <span>Enter Assessment Portal</span>
                   <span style={{ fontSize: '1.15rem' }}>&rarr;</span>
                 </Link>
 
-                {userEmail ? (
-                  <Link
-                    href="/dashboard"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: '#FFFFFF',
-                      color: 'var(--brand-dark)',
-                      padding: '15px 26px',
-                      borderRadius: '12px',
-                      fontWeight: 600,
-                      fontSize: '1rem',
-                      textDecoration: 'none',
-                      boxShadow: '0 4px 16px -2px rgba(18, 51, 107, 0.08)',
-                      border: '1.5px solid var(--brand-border)',
-                      transition: 'all 0.18s ease',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <span>Go to My Dashboard &rarr;</span>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/register"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: '#FFFFFF',
-                      color: 'var(--brand-dark)',
-                      padding: '15px 26px',
-                      borderRadius: '12px',
-                      fontWeight: 600,
-                      fontSize: '1rem',
-                      textDecoration: 'none',
-                      boxShadow: '0 4px 16px -2px rgba(18, 51, 107, 0.08)',
-                      border: '1.5px solid var(--brand-border)',
-                      transition: 'all 0.18s ease',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <span>Create Your Account</span>
-                  </Link>
-                )}
+                <Link
+                  href="/launching-soon"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: '#FFFFFF',
+                    color: 'var(--brand-dark)',
+                    padding: '15px 26px',
+                    borderRadius: '12px',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 16px -2px rgba(18, 51, 107, 0.08)',
+                    border: '1.5px solid var(--brand-border)',
+                    transition: 'all 0.18s ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span>Platform Launch: 16 Nov</span>
+                </Link>
               </div>
 
               {/* Dedicated Assigned Exam Link */}
               <div style={{ marginTop: '4px' }}>
                 <Link
-                  href="/assess/login"
+                  href="/ecell/login"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -222,73 +204,9 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                     textDecoration: 'none',
                   }}
                 >
-                  <span>Have an Assigned Examination? Login Here</span>
+                  <span>Candidate Login &amp; Department Selection Portal</span>
                   <span>&rarr;</span>
                 </Link>
-              </div>
-
-              {/* Tier 2: Aesthetic Integrated Utility Console */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-start',
-                  width: '100%',
-                  marginTop: '8px',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    background: 'rgba(255, 255, 255, 0.94)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(18, 51, 107, 0.12)',
-                    borderRadius: '11px',
-                    padding: '8px 14px',
-                    boxShadow: '0 4px 18px -2px rgba(18, 51, 107, 0.06)',
-                    gap: '12px',
-                    width: 'fit-content',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <Link
-                    href="/resume-builder"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      color: 'var(--brand-dark)',
-                      textDecoration: 'none',
-                      padding: '3px 6px',
-                    }}
-                  >
-                    <span>Free Resume Builder &rarr;</span>
-                  </Link>
-
-                  <span style={{ width: '1px', height: '17px', background: 'rgba(18, 51, 107, 0.18)' }} />
-
-                  <a
-                    href="#resume-checker"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onCheckResumeClick();
-                    }}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      color: 'var(--brand-dark)',
-                      textDecoration: 'none',
-                      padding: '3px 6px',
-                    }}
-                  >
-                    <span>ATS Resume Checker &rarr;</span>
-                  </a>
-                </div>
               </div>
             </div>
           </div>
@@ -305,7 +223,7 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                 overflow: 'hidden',
               }}
             >
-              {/* Cockpit Window Header & Mode Switcher */}
+              {/* Cockpit Window Header & Mode Badge */}
               <div
                 style={{
                   background: '#071226',
@@ -330,327 +248,139 @@ export function Hero({ onCheckResumeClick, onSeeHowItWorksClick, onOpenBuilderCl
                   </span>
                 </div>
 
-                {/* Mode Switcher Tabs */}
-                <div style={{ display: 'flex', gap: '4px', background: '#0A1B38', padding: '3px', borderRadius: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSimulatorTab('exam')}
+                {/* Proctored Exam IDE Badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0A1B38', padding: '5px 14px', borderRadius: '8px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0099E5', display: 'inline-block' }} />
+                  <span
                     style={{
-                      background: activeSimulatorTab === 'exam' ? '#0099E5' : 'transparent',
-                      color: activeSimulatorTab === 'exam' ? '#FFFFFF' : '#8E9EB5',
-                      border: 'none',
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      fontSize: '0.76rem',
+                      color: '#FFFFFF',
+                      fontSize: '0.78rem',
                       fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
+                      letterSpacing: '0.2px',
                     }}
                   >
-                    01. Proctored Exam IDE
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSimulatorTab('interview')}
-                    style={{
-                      background: activeSimulatorTab === 'interview' ? '#10B981' : 'transparent',
-                      color: activeSimulatorTab === 'interview' ? '#FFFFFF' : '#8E9EB5',
-                      border: 'none',
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      fontSize: '0.76rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    02. AI Mock Interview (V2 Preview)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSimulatorTab('recruiter')}
-                    style={{
-                      background: activeSimulatorTab === 'recruiter' ? '#6366F1' : 'transparent',
-                      color: activeSimulatorTab === 'recruiter' ? '#FFFFFF' : '#8E9EB5',
-                      border: 'none',
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      fontSize: '0.76rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    03. Recruiter Roster
-                  </button>
+                    Proctored Exam IDE
+                  </span>
                 </div>
               </div>
 
-              {/* TAB 1: LIVE PROCTORED EXAM IDE */}
-              {activeSimulatorTab === 'exam' && (
-                <div style={{ padding: '18px 22px' }}>
-                  {/* Proctoring Telemetry Card */}
-                  <div
-                    style={{
-                      background: 'rgba(18, 51, 107, 0.35)',
-                      border: '1px solid rgba(2, 132, 199, 0.3)',
-                      borderRadius: '9px',
-                      padding: '11px 15px',
-                      marginBottom: '14px',
-                      fontSize: '0.78rem',
-                      fontFamily: 'Consolas, monospace',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', color: '#BAE6FD' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 6px #22C55E', display: 'inline-block' }} />
-                      <span style={{ fontWeight: 600 }}>PROCTORING: SHIELD LOCKED (0 tab blurs detected)</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8E9EB5', fontSize: '0.76rem' }}>
-                      <span>TIME REMAINING: 42:18</span>
-                      <span style={{ color: '#38BDF8', fontWeight: 600 }}>AUTOSAVE: v14 (DB SYNCED)</span>
-                    </div>
+              {/* LIVE PROCTORED EXAM IDE */}
+              <div style={{ padding: '18px 22px' }}>
+                {/* Proctoring Telemetry Card */}
+                <div
+                  style={{
+                    background: 'rgba(18, 51, 107, 0.35)',
+                    border: '1px solid rgba(2, 132, 199, 0.3)',
+                    borderRadius: '9px',
+                    padding: '11px 15px',
+                    marginBottom: '14px',
+                    fontSize: '0.78rem',
+                    fontFamily: 'Consolas, monospace',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', color: '#BAE6FD' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', boxShadow: '0 0 6px #22C55E', display: 'inline-block' }} />
+                    <span style={{ fontWeight: 600 }}>PROCTORING: SHIELD LOCKED (0 tab blurs detected)</span>
                   </div>
-
-                  {/* Code Editor Box */}
-                  <div
-                    style={{
-                      background: '#060E1E',
-                      borderRadius: '11px',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      padding: '16px 18px',
-                      fontFamily: 'Consolas, "Fira Code", monospace',
-                      fontSize: '0.88rem',
-                      lineHeight: 1.62,
-                      color: '#E2E8F0',
-                      marginBottom: '16px',
-                      overflowX: 'auto',
-                    }}
-                  >
-                    <div style={{ color: '#64748B', marginBottom: '8px', fontSize: '0.76rem' }}>
-                      {'// Problem: SlidingWindowRateLimiter (Concurrency) • Max Score: 25 Marks'}
-                    </div>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      <div style={{ color: '#475569', userSelect: 'none', textAlign: 'right', fontSize: '0.84rem', lineHeight: 1.62 }}>
-                        <div>1</div>
-                        <div>2</div>
-                        <div>3</div>
-                        <div>4</div>
-                        <div>5</div>
-                        <div>6</div>
-                        <div>7</div>
-                        <div>8</div>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div>
-                          <span style={{ color: '#F43F5E' }}>export async function</span>{' '}
-                          <span style={{ color: '#38BDF8' }}>checkRateLimit</span>(
-                          <span style={{ color: '#FCD34D' }}>key: string, limit: number, windowMs: number</span>
-                          ): <span style={{ color: '#38BDF8' }}>Promise&lt;boolean&gt;</span> &#123;
-                        </div>
-                        <div style={{ paddingLeft: '16px', color: '#94A3B8' }}>
-                          const now = Date.now(), clearBefore = now - windowMs;<br />
-                          <span style={{ color: '#6EE7B7' }}>{'// Atomic Redis sliding log execution'}</span><br />
-                          await redis.zremrangebyscore(key, 0, clearBefore);<br />
-                          if (await redis.zcard(key) &gt;= limit) <span style={{ color: '#F43F5E' }}>return false</span>;<br />
-                          await redis.zadd(key, now, `${'{'}now{'}'}-${'{'}crypto.randomUUID(){'}'}`);<br />
-                          <span style={{ color: '#F43F5E' }}>return true</span>;
-                        </div>
-                        <div>&#125;</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sleek Combined Action Row */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '13px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <button
-                        type="button"
-                        onClick={handleSimulateTests}
-                        disabled={isRunningTests}
-                        style={{
-                          background: '#0099E5',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          padding: '9px 18px',
-                          borderRadius: '8px',
-                          fontWeight: 700,
-                          fontSize: '0.84rem',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 10px rgba(0, 153, 229, 0.35)',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        {isRunningTests ? 'Compiling...' : 'Run Official Test Suite ▶'}
-                      </button>
-                      <span style={{ fontSize: '0.8rem', color: testRunCompleted ? '#34D399' : '#8E9EB5', fontFamily: 'Consolas, monospace' }}>
-                        {testRunCompleted ? '✓ 4 / 4 PASSED (14ms)' : '4 test cases pending'}
-                      </span>
-                    </div>
-
-                    <Link
-                      href="/assess"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.06)',
-                        color: '#FFFFFF',
-                        border: '1px solid rgba(255, 255, 255, 0.22)',
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      Launch Live Assessment &rarr;
-                    </Link>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8E9EB5', fontSize: '0.76rem' }}>
+                    <span>TIME REMAINING: 42:18</span>
+                    <span style={{ color: '#38BDF8', fontWeight: 600 }}>AUTOSAVE: v14 (DB SYNCED)</span>
                   </div>
                 </div>
-              )}
 
-              {/* TAB 2: TECHNICAL INTERVIEW */}
-              {activeSimulatorTab === 'interview' && (
-                <div style={{ padding: '18px 20px' }}>
-                  <div
-                    style={{
-                      background: 'rgba(18, 51, 107, 0.28)',
-                      border: '1px solid rgba(220, 230, 245, 0.1)',
-                      borderRadius: '8px',
-                      padding: '8px 14px',
-                      marginBottom: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: '0.74rem',
-                      color: '#E2E8F0',
-                    }}
-                  >
-                    <span>System Design Technical Evaluation</span>
-                    <span style={{ color: '#60A5FA', fontWeight: 600 }}>Adaptive Questioning</span>
+                {/* Code Editor Box */}
+                <div
+                  style={{
+                    background: '#060E1E',
+                    borderRadius: '11px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    padding: '16px 18px',
+                    fontFamily: 'Consolas, "Fira Code", monospace',
+                    fontSize: '0.88rem',
+                    lineHeight: 1.62,
+                    color: '#E2E8F0',
+                    marginBottom: '16px',
+                    overflowX: 'auto',
+                  }}
+                >
+                  <div style={{ color: '#64748B', marginBottom: '8px', fontSize: '0.76rem' }}>
+                    {'// Problem: SlidingWindowRateLimiter (Concurrency) • Max Score: 25 Marks'}
                   </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
-                    <div style={{ background: '#050D1A', borderRadius: '8px', padding: '12px 14px', borderLeft: '3px solid var(--brand-primary)' }}>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60A5FA', textTransform: 'uppercase', marginBottom: '3px' }}>
-                        Evaluator Prompt
-                      </div>
-                      <p style={{ color: '#E2E8F0', fontSize: '0.82rem', margin: 0, lineHeight: 1.45 }}>
-                        &ldquo;How would you ensure idempotency when a client retries an in-flight payment request during a network partition?&rdquo;
-                      </p>
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{ color: '#475569', userSelect: 'none', textAlign: 'right', fontSize: '0.84rem', lineHeight: 1.62 }}>
+                      <div>1</div>
+                      <div>2</div>
+                      <div>3</div>
+                      <div>4</div>
+                      <div>5</div>
+                      <div>6</div>
+                      <div>7</div>
+                      <div>8</div>
                     </div>
-
-                    <div style={{ background: '#071224', borderRadius: '8px', padding: '12px 14px', borderLeft: '3px solid #10B981' }}>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#10B981', textTransform: 'uppercase', marginBottom: '3px' }}>
-                        Candidate Response &amp; Analysis
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div>
+                        <span style={{ color: '#F43F5E' }}>export async function</span>{' '}
+                        <span style={{ color: '#38BDF8' }}>checkRateLimit</span>(
+                        <span style={{ color: '#FCD34D' }}>key: string, limit: number, windowMs: number</span>
+                        ): <span style={{ color: '#38BDF8' }}>Promise&lt;boolean&gt;</span> &#123;
                       </div>
-                      <p style={{ color: '#CBD5E1', fontSize: '0.82rem', margin: 0, lineHeight: 1.45 }}>
-                        &ldquo;We acquire an atomic reservation key with a 5-minute lease in Redis. The ledger strictly validates uniqueness before committing...&rdquo;
-                      </p>
-                      <div style={{ marginTop: '6px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ background: 'rgba(18, 51, 107, 0.5)', color: '#CBD5E1', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(220, 230, 245, 0.15)' }}>
-                          Communication: 9.4 / 10
-                        </span>
-                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#6EE7B7', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                          Architecture: Senior L5 Bar Passed
-                        </span>
+                      <div style={{ paddingLeft: '16px', color: '#94A3B8' }}>
+                        const now = Date.now(), clearBefore = now - windowMs;<br />
+                        <span style={{ color: '#6EE7B7' }}>{'// Atomic Redis sliding log execution'}</span><br />
+                        await redis.zremrangebyscore(key, 0, clearBefore);<br />
+                        if (await redis.zcard(key) &gt;= limit) <span style={{ color: '#F43F5E' }}>return false</span>;<br />
+                        await redis.zadd(key, now, `${'{'}now{'}'}-${'{'}crypto.randomUUID(){'}'}`);<br />
+                        <span style={{ color: '#F43F5E' }}>return true</span>;
                       </div>
+                      <div>&#125;</div>
                     </div>
                   </div>
+                </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <span
+                {/* Sleek Combined Action Row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '13px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button
+                      type="button"
+                      onClick={handleSimulateTests}
+                      disabled={isRunningTests}
                       style={{
-                        background: 'rgba(255, 255, 255, 0.12)',
-                        color: '#93C5FD',
-                        padding: '8px 16px',
-                        borderRadius: '7px',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        border: '1px solid rgba(220, 230, 245, 0.2)',
+                        background: '#0099E5',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        padding: '9px 18px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.84rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 10px rgba(0, 153, 229, 0.35)',
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      Version 2 Roadmap &bull; In Development
+                      {isRunningTests ? 'Compiling...' : 'Run Official Test Suite ▶'}
+                    </button>
+                    <span style={{ fontSize: '0.8rem', color: testRunCompleted ? '#34D399' : '#8E9EB5', fontFamily: 'Consolas, monospace' }}>
+                      {testRunCompleted ? '✓ 4 / 4 PASSED (14ms)' : '4 test cases pending'}
                     </span>
                   </div>
-                </div>
-              )}
 
-              {/* TAB 3: SCORECARD ROSTER */}
-              {activeSimulatorTab === 'recruiter' && (
-                <div style={{ padding: '18px 20px' }}>
-                  <div
+                  <Link
+                    href="/assess"
                     style={{
-                      background: 'rgba(18, 51, 107, 0.28)',
-                      border: '1px solid rgba(220, 230, 245, 0.1)',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      color: '#FFFFFF',
+                      border: '1px solid rgba(255, 255, 255, 0.22)',
+                      padding: '8px 16px',
                       borderRadius: '8px',
-                      padding: '8px 14px',
-                      marginBottom: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: '0.74rem',
-                      color: '#E2E8F0',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
                     }}
                   >
-                    <span>Candidate Evaluation Roster</span>
-                    <span style={{ color: '#60A5FA', fontWeight: 600 }}>Role: SDE-2 Backend</span>
-                  </div>
-
-                  <div style={{ overflowX: 'auto', marginBottom: '14px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem', color: '#CBD5E1' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(220, 230, 245, 0.1)', color: '#8E9EB5', textAlign: 'left' }}>
-                          <th style={{ padding: '6px 8px' }}>Candidate</th>
-                          <th style={{ padding: '6px 8px' }}>Score</th>
-                          <th style={{ padding: '6px 8px' }}>Percentile</th>
-                          <th style={{ padding: '6px 8px' }}>Proctoring</th>
-                          <th style={{ padding: '6px 8px' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                          <td style={{ padding: '8px', fontWeight: 600, color: '#FFF' }}>arjun.sharma@talent.in</td>
-                          <td style={{ padding: '8px', color: '#60A5FA', fontWeight: 700 }}>96 / 100</td>
-                          <td style={{ padding: '8px' }}>Top 1.5%</td>
-                          <td style={{ padding: '8px', color: '#34D399' }}>Clean Session</td>
-                          <td style={{ padding: '8px' }}>
-                            <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#6EE7B7', padding: '2px 7px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                              QUALIFIED
-                            </span>
-                          </td>
-                        </tr>
-                        <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                          <td style={{ padding: '8px', fontWeight: 600, color: '#FFF' }}>priya.verma@techcorp.in</td>
-                          <td style={{ padding: '8px', color: '#60A5FA', fontWeight: 700 }}>88 / 100</td>
-                          <td style={{ padding: '8px' }}>Top 8.0%</td>
-                          <td style={{ padding: '8px', color: '#FBBF24' }}>Verified</td>
-                          <td style={{ padding: '8px' }}>
-                            <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#6EE7B7', padding: '2px 7px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 600, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                              QUALIFIED
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Link
-                      href="/assess/admin"
-                      style={{
-                        background: 'var(--brand-primary)',
-                        color: '#FFFFFF',
-                        padding: '8px 16px',
-                        borderRadius: '7px',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        border: '1px solid rgba(220, 230, 245, 0.2)',
-                      }}
-                    >
-                      Open Recruiter Console &rarr;
-                    </Link>
-                  </div>
+                    Launch Live Assessment &rarr;
+                  </Link>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>

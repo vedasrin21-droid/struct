@@ -76,6 +76,7 @@ export async function POST(request: Request) {
       accessScope = 'single',
       maxAttempts = 1,
       organizationId,
+      customPostExamQuestion,
     } = body;
 
     if (!title || !code) {
@@ -112,25 +113,29 @@ export async function POST(request: Request) {
       const qParams = isAll ? [parseInt(randomCount, 10)] : [randomizeFromCategory, parseInt(randomCount, 10)];
       const randomQResult = await db.query<any>(qQuery, qParams);
       selectedQuestionIds = randomQResult.rows.map(r => r.id);
+
+      // If category had fewer or 0 questions, fallback to any available questions
+      if (selectedQuestionIds.length === 0) {
+        const fallbackQ = await db.query<any>('SELECT id FROM questions ORDER BY RANDOM() LIMIT $1', [parseInt(randomCount, 10) || 10]);
+        selectedQuestionIds = fallbackQ.rows.map(r => r.id);
+      }
     } else {
       // Default: pick up to 10 available questions
       const allQ = await db.query<any>('SELECT id FROM questions ORDER BY created_at ASC LIMIT 10');
       selectedQuestionIds = allQ.rows.map(q => q.id);
     }
 
-    if (selectedQuestionIds.length === 0) {
-      return NextResponse.json({ error: 'At least 1 question is required to create an exam' }, { status: 400 });
+    // Calculate total marks based on attached questions (or default to 10.0 if empty draft)
+    let totalMarks = passThreshold > 0 ? passThreshold * 2 : 10.0;
+    if (selectedQuestionIds.length > 0) {
+      const marksPlaceholders = selectedQuestionIds.map((_, i) => `$${i + 1}`).join(',');
+      const marksSumRow = await db.queryOne<any>(`
+        SELECT SUM(marks) as total_marks 
+        FROM questions 
+        WHERE id IN (${marksPlaceholders})
+      `, selectedQuestionIds);
+      totalMarks = marksSumRow?.total_marks ? parseFloat(marksSumRow.total_marks) : selectedQuestionIds.length;
     }
-
-    // Calculate total marks based on attached questions
-    const marksPlaceholders = selectedQuestionIds.map((_, i) => `$${i + 1}`).join(',');
-    const marksSumRow = await db.queryOne<any>(`
-      SELECT SUM(marks) as total_marks 
-      FROM questions 
-      WHERE id IN (${marksPlaceholders})
-    `, selectedQuestionIds);
-
-    const totalMarks = marksSumRow?.total_marks ? parseFloat(marksSumRow.total_marks) : selectedQuestionIds.length;
 
     await db.transaction(async (tx) => {
       await tx.execute(`
@@ -139,13 +144,13 @@ export async function POST(request: Request) {
           negative_marking_enabled, shuffle_questions, allow_back_navigation, show_answer_key,
           random_question_count, enable_fullscreen, enable_ai_defense, enable_anti_google,
           auth_mode, access_scope, max_attempts,
-          status, results_released, instructions, created_at, updated_at
+          status, results_released, instructions, custom_post_exam_question, created_at, updated_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9,
           $10, $11, $12, $13,
           $14, $15, $16, $17,
           $18, $19, $20,
-          'draft', 0, $21, $22, $23
+          'draft', 0, $21, $22, $23, $24
         )
       `, [
         examId,
@@ -169,6 +174,7 @@ export async function POST(request: Request) {
         ['single', 'multiple'].includes(accessScope) ? accessScope : 'single',
         Math.max(1, parseInt(maxAttempts, 10) || 1),
         instructions || '1. Read all questions carefully.\n2. Answers autosave automatically.\n3. Switching tabs will trigger security telemetry logs.',
+        customPostExamQuestion ? String(customPostExamQuestion).trim() : '',
         now,
         now
       ]);

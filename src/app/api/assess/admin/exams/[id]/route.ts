@@ -72,6 +72,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       enableFullscreen,
       enableAiDefense,
       randomQuestionCount,
+      customPostExamQuestion,
     } = body;
 
     const db = getDb();
@@ -97,18 +98,19 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const newAiDefense = enableAiDefense !== undefined ? (enableAiDefense ? 1 : 0) : exam.enable_ai_defense;
     const newAntiGoogle = body.enableAntiGoogle !== undefined ? (body.enableAntiGoogle ? 1 : 0) : (exam.enable_anti_google !== undefined ? exam.enable_anti_google : 1);
     const newRandomCount = randomQuestionCount !== undefined ? parseInt(randomQuestionCount, 10) : (exam.random_question_count || 0);
+    const newCustomQuestion = customPostExamQuestion !== undefined ? String(customPostExamQuestion).trim() : (exam.custom_post_exam_question || '');
     const now = Date.now();
 
     await db.execute(`
       UPDATE exams 
       SET status = $1, title = $2, description = $3, duration_minutes = $4, pass_marks = $5, instructions = $6,
           allow_back_navigation = $7, show_answer_key = $8, enable_fullscreen = $9, enable_ai_defense = $10, enable_anti_google = $11, random_question_count = $12,
-          updated_at = $13
-      WHERE id = $14
+          custom_post_exam_question = $13, updated_at = $14
+      WHERE id = $15
     `, [
       newStatus, newTitle, newDesc, newDuration, newPassMarks, newInstructions,
       newAllowBack, newShowAnsKey, newFullscreen, newAiDefense, newAntiGoogle, newRandomCount,
-      now, id
+      newCustomQuestion, now, id
     ]);
 
     await db.execute(`

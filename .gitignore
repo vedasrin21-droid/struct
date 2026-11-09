@@ -47,7 +47,8 @@ next-env.d.ts
 *.db-journal
 *.db-wal
 *.db-shm
-data/
+/data/
+!src/data/
 
 # agent & prompt artifacts
 master_prompt.txt

@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState, useRef, ChangeEvent, DragEvent } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent, DragEvent } from 'react';
 import { AnalysisResult, ExperienceLevel } from '@/types';
 
 interface ResumeCheckerProps {
   onAnalysisComplete: (result: AnalysisResult) => void;
+  defaultTab?: 'upload' | 'paste';
 }
 
-export function ResumeChecker({ onAnalysisComplete }: ResumeCheckerProps) {
-  const [activeTab, setActiveTab] = useState<'upload' | 'paste'>('upload');
+export function ResumeChecker({ onAnalysisComplete, defaultTab = 'upload' }: ResumeCheckerProps) {
+  const [activeTab, setActiveTab] = useState<'upload' | 'paste'>(defaultTab);
+
+  useEffect(() => {
+    if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab]);
   const [file, setFile] = useState<File | null>(null);
   const [pastedText, setPastedText] = useState<string>('');
   const [targetJobTitle, setTargetJobTitle] = useState<string>('');

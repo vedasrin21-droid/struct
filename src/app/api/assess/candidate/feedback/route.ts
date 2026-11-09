@@ -18,6 +18,8 @@ export async function POST(req: NextRequest) {
       improvementSuggestions,
       wouldRecommend,
       marketingConsent,
+      customQuestionPrompt,
+      customQuestionResponse,
       email: fallbackEmail,
       name: fallbackName,
     } = body;
@@ -42,13 +44,28 @@ export async function POST(req: NextRequest) {
     const db = getDb();
     const feedbackId = `fb_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
+    let finalPrompt = customQuestionPrompt ? String(customQuestionPrompt).trim() : '';
+    if (!finalPrompt && examId) {
+      try {
+        const ex = await db.queryOne<{ custom_post_exam_question: string }>(
+          'SELECT custom_post_exam_question FROM exams WHERE id = $1',
+          [examId]
+        );
+        if (ex?.custom_post_exam_question) {
+          finalPrompt = ex.custom_post_exam_question;
+        }
+      } catch {}
+    }
+    const finalResponse = customQuestionResponse ? String(customQuestionResponse).trim() : '';
+    const nowTimestamp = db.isPostgres() ? new Date().toISOString() : Date.now();
+
     await db.query(
       `INSERT INTO exam_feedback (
         id, exam_id, attempt_id, candidate_email, candidate_name,
         overall_rating, navigation_rating, technical_issues,
         liked_aspects, improvement_suggestions, would_recommend,
-        marketing_consent, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
+        marketing_consent, custom_question_prompt, custom_question_response, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         feedbackId,
         examId,
@@ -62,6 +79,9 @@ export async function POST(req: NextRequest) {
         improvementSuggestions || '',
         wouldRecommend || 'yes',
         Boolean(marketingConsent),
+        finalPrompt,
+        finalResponse,
+        nowTimestamp,
       ]
     );
 

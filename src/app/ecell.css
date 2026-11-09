@@ -1,0 +1,493 @@
+/* ========================================================
+   STRUCT ECELL RECRUITMENT & LAUNCH SUITE
+   Executive Institutional Examination System
+   Brand Tokens: #0A1B38, #12336B, #0284C7, #F5F3EE
+   ======================================================== */
+
+.ecell-page-wrapper {
+  min-height: 100vh;
+  background-color: var(--brand-bg, #F5F3EE);
+  color: var(--brand-text, #172B4D);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Institutional Header Bar */
+.ecell-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--brand-border, #E4E2DC);
+}
+
+.ecell-navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ecell-brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.ecell-brand-logo-img {
+  width: 44px;
+  height: 34px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(10, 27, 56, 0.16));
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.ecell-brand-logo-img:hover {
+  transform: scale(1.04);
+}
+
+.ecell-brand-emblem {
+  width: 42px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ecell-brand-title {
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #0A1B38;
+  line-height: 1.1;
+}
+
+.ecell-brand-subtitle {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #0284C7;
+  display: block;
+}
+
+.ecell-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 13px;
+  border-radius: 100px;
+  background: #EEF4FC;
+  color: #12336B;
+  border: 1px solid #DCE6F5;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.ecell-tag-pill-dark {
+  background: #0A1B38;
+  color: #FFFFFF;
+  border: 1px solid #0A1B38;
+}
+
+.ecell-dot-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0284C7;
+  display: inline-block;
+}
+
+/* Main Container & Executive Clay Cards */
+.ecell-main-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 20px;
+}
+
+.ecell-container-wide {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 36px 20px;
+}
+
+.ecell-card-login {
+  width: 100%;
+  max-width: 450px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  border: 1.5px solid var(--brand-border, #E4E2DC);
+  box-shadow: 0 16px 36px -6px rgba(18, 51, 107, 0.10), 0 4px 14px -2px rgba(18, 51, 107, 0.05);
+  padding: 38px 34px;
+}
+
+.ecell-card-institutional {
+  background: #FFFFFF;
+  border-radius: 20px;
+  border: 1.5px solid var(--brand-border, #E4E2DC);
+  box-shadow: 0 16px 36px -6px rgba(18, 51, 107, 0.10), 0 4px 14px -2px rgba(18, 51, 107, 0.05);
+  padding: 34px;
+}
+
+.ecell-heading-hero {
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0A1B38;
+  letter-spacing: -0.8px;
+  line-height: 1.2;
+  margin: 0 0 10px 0;
+}
+
+.ecell-text-body {
+  font-size: 0.92rem;
+  color: var(--brand-text-muted, #5E6C84);
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+/* Form Controls */
+.ecell-field-group {
+  margin-bottom: 20px;
+}
+
+.ecell-label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #0A1B38;
+  margin-bottom: 8px;
+}
+
+.ecell-input-text {
+  width: 100%;
+  padding: 13px 16px;
+  background: #FAF9F6;
+  border: 1.5px solid #E4E2DC;
+  border-radius: 10px;
+  font-size: 0.94rem;
+  color: #0A1B38;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+
+.ecell-input-text:focus {
+  background: #FFFFFF;
+  border-color: #12336B;
+  box-shadow: 0 0 0 3px rgba(18, 51, 107, 0.12);
+}
+
+.ecell-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #07152E 0%, #12336B 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.98rem;
+  cursor: pointer;
+  box-shadow: 0 8px 24px -2px rgba(18, 51, 107, 0.32);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.ecell-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0A1B38 0%, #0E2652 100%);
+  transform: translateY(-1.5px);
+  box-shadow: 0 12px 26px -2px rgba(18, 51, 107, 0.38);
+}
+
+.ecell-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ecell-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: #FFFFFF;
+  color: #12336B;
+  border: 1.5px solid #E4E2DC;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(18, 51, 107, 0.05);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.ecell-btn-secondary:hover {
+  background: #EEF4FC;
+  border-color: #DCE6F5;
+  transform: translateY(-1px);
+}
+
+.ecell-banner-error {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background-color: var(--accent-red-bg, #FEE2E2);
+  border: 1px solid var(--accent-red-border, #FECACA);
+  color: var(--accent-red, #B91C1C);
+  font-size: 0.86rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  line-height: 1.45;
+}
+
+.ecell-banner-info {
+  padding: 14px 18px;
+  border-radius: 12px;
+  background-color: #EEF4FC;
+  border: 1px solid #DCE6F5;
+  color: #12336B;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Department Selection Cards */
+.ecell-dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.ecell-dept-card {
+  background: #FAF9F6;
+  border: 1.5px solid #E4E2DC;
+  border-radius: 14px;
+  padding: 22px 20px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  position: relative;
+}
+
+.ecell-dept-card:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(18, 51, 107, 0.08);
+}
+
+.ecell-dept-card.selected {
+  background: #FFFFFF;
+  border: 2px solid #0284C7;
+  box-shadow: 0 10px 24px rgba(2, 132, 199, 0.15);
+}
+
+.ecell-dept-name {
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #0A1B38;
+  margin: 0 0 6px 0;
+}
+
+.ecell-dept-desc {
+  font-size: 0.84rem;
+  color: #5E6C84;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Examination Screen Layout */
+.ecell-exam-container {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  width: 100%;
+}
+
+.ecell-exam-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ecell-exam-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ecell-mcq-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1.5px solid #E4E2DC;
+  background: #FAF9F6;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 12px;
+}
+
+.ecell-mcq-choice:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+}
+
+.ecell-mcq-choice.active {
+  background: #FFFFFF;
+  border: 2px solid #0284C7;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12);
+}
+
+.ecell-mcq-letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: #E2E8F0;
+  color: #0A1B38;
+  flex-shrink: 0;
+}
+
+.ecell-mcq-choice.active .ecell-mcq-letter {
+  background: #0284C7;
+  color: #FFFFFF;
+}
+
+/* Question Palette */
+.ecell-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.ecell-palette-btn {
+  height: 38px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid #E2E8F0;
+  background: #FAF9F6;
+  color: #0A1B38;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.ecell-palette-btn:hover {
+  border-color: #0A1B38;
+}
+
+.ecell-palette-btn.current {
+  border: 2px solid #0284C7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+.ecell-palette-btn.answered {
+  background: #12336B;
+  color: #FFFFFF;
+  border-color: #12336B;
+}
+
+.ecell-palette-btn.marked {
+  background: #B45309;
+  color: #FFFFFF;
+  border-color: #B45309;
+}
+
+/* Timer Badge */
+.ecell-timer-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.ecell-timer-normal {
+  background: #EEF4FC;
+  color: #12336B;
+  border: 1px solid #DCE6F5;
+}
+
+.ecell-timer-warning {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.ecell-timer-danger {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+  animation: pulse 1s infinite;
+}
+
+/* Footer */
+.ecell-footer {
+  border-top: 1px solid var(--brand-border, #E4E2DC);
+  background-color: #FFFFFF;
+  padding: 16px 20px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #8993A4;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 860px) {
+  .ecell-exam-container {
+    grid-template-columns: 1fr;
+  }
+
+  .ecell-card-login {
+    padding: 28px 22px;
+  }
+
+  .ecell-card-institutional {
+    padding: 24px 18px;
+  }
+
+  .ecell-dept-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -40,6 +40,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
           total_marks: exam.total_marks,
           pass_marks: exam.pass_marks,
           instructions: exam.instructions,
+          custom_post_exam_question: exam.custom_post_exam_question || '',
           negative_marking_enabled: Boolean(exam.negative_marking_enabled),
         },
       });
@@ -156,6 +157,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         total_marks: exam.total_marks,
         pass_marks: exam.pass_marks,
         instructions: exam.instructions,
+        custom_post_exam_question: exam.custom_post_exam_question || '',
         negative_marking_enabled: Boolean(exam.negative_marking_enabled),
         allow_back_navigation: exam.allow_back_navigation === undefined ? true : Boolean(exam.allow_back_navigation),
         show_answer_key: exam.show_answer_key === undefined ? true : Boolean(exam.show_answer_key),

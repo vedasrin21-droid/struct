@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function AdminConsolePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'overview' | 'exams' | 'questions' | 'candidates' | 'security' | 'organization'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'exams' | 'questions' | 'candidates' | 'security' | 'organization' | 'feedback'>('overview');
   const [adminUser, setAdminUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +20,10 @@ export default function AdminConsolePage() {
   // Tab 2: Exams Data
   const [exams, setExams] = useState<any[]>([]);
   const [showCreateExamModal, setShowCreateExamModal] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [creatingExam, setCreatingExam] = useState(false);
+  const [copiedLinkExamId, setCopiedLinkExamId] = useState<string | null>(null);
+  const [copiedCodeExamId, setCopiedCodeExamId] = useState<string | null>(null);
   const [examForm, setExamForm] = useState({
     title: '',
     code: '',
@@ -43,7 +47,13 @@ export default function AdminConsolePage() {
     authMode: 'exam_only' as 'exam_only' | 'clerk',
     accessScope: 'single' as 'single' | 'multiple',
     maxAttempts: 1,
+    customPostExamQuestion: '',
   });
+
+  // Tab 7: Feedback Data
+  const [feedbackList, setFeedbackList] = useState<any[]>([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackExamFilter, setFeedbackExamFilter] = useState('');
 
   // Tab 6: Organization Profile & Team Members
   const [hasOrg, setHasOrg] = useState<boolean | null>(null);
@@ -230,8 +240,23 @@ export default function AdminConsolePage() {
       loadCandidates(),
       loadSecurityEvents(),
       loadOrgData(),
+      loadFeedback(),
     ]);
     setLoading(false);
+  };
+
+  const loadFeedback = async (examIdFilter?: string) => {
+    try {
+      setFeedbackLoading(true);
+      const url = examIdFilter ? `/api/assess/admin/feedback?examId=${encodeURIComponent(examIdFilter)}` : '/api/assess/admin/feedback';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (res.ok) {
+        setFeedbackList(data.feedback || []);
+      }
+    } catch {} finally {
+      setFeedbackLoading(false);
+    }
   };
 
   const loadReports = async () => {
@@ -396,6 +421,8 @@ export default function AdminConsolePage() {
 
   const handleCreateExam = async (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
+    setCreatingExam(true);
     try {
       const res = await fetch('/api/assess/admin/exams', {
         method: 'POST',
@@ -407,10 +434,14 @@ export default function AdminConsolePage() {
 
       setSuccessMsg(`Exam "${examForm.title}" created successfully!`);
       setShowCreateExamModal(false);
+      setExamForm(prev => ({ ...prev, title: '', code: '', customPostExamQuestion: '' }));
       loadExams();
       loadReports();
     } catch (err: any) {
+      setModalError(err.message || 'Failed to create exam');
       setError(err.message);
+    } finally {
+      setCreatingExam(false);
     }
   };
 
@@ -723,6 +754,7 @@ export default function AdminConsolePage() {
             { id: 'candidates', label: 'Candidates Roster' },
             { id: 'security', label: 'Proctoring Telemetry' },
             { id: 'organization', label: 'Organization & Team' },
+            { id: 'feedback', label: 'Feedback & Responses' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -1010,14 +1042,62 @@ export default function AdminConsolePage() {
                     {exams.map(ex => (
                       <tr key={ex.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                         <td style={{ padding: '12px 14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ background: '#E0F2FE', color: '#0369A1', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <span style={{ background: '#E0F2FE', color: '#0369A1', padding: '3px 8px', borderRadius: '5px', fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.5px' }}>
                               {ex.code}
                             </span>
                             <span style={{ fontWeight: 700, color: '#0A1B38' }}>{ex.title}</span>
+                            {ex.custom_post_exam_question && (
+                              <span style={{ background: '#FEF3C7', color: '#B45309', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }} title={`Custom Question: ${ex.custom_post_exam_question}`}>
+                                📝 Custom Post-Exam Q
+                              </span>
+                            )}
                           </div>
-                          <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '3px' }}>
                             Pass threshold: {ex.pass_marks} / {ex.total_marks} marks &bull; {ex.negative_marking_enabled ? 'Negative Marking' : 'No Negative Marks'}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(ex.code);
+                                setCopiedCodeExamId(ex.id);
+                                setTimeout(() => setCopiedCodeExamId(null), 2000);
+                              }}
+                              style={{
+                                background: copiedCodeExamId === ex.id ? '#DCFCE7' : '#F8FAFC',
+                                color: copiedCodeExamId === ex.id ? '#15803D' : '#475569',
+                                border: '1px solid #CBD5E1',
+                                borderRadius: '5px',
+                                padding: '2px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {copiedCodeExamId === ex.id ? '✓ Code Copied!' : 'Copy Code'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const shareUrl = `https://structonline.in/assess/login?code=${ex.code}`;
+                                navigator.clipboard.writeText(shareUrl);
+                                setCopiedLinkExamId(ex.id);
+                                setTimeout(() => setCopiedLinkExamId(null), 2000);
+                              }}
+                              style={{
+                                background: copiedLinkExamId === ex.id ? '#DCFCE7' : '#EFF6FF',
+                                color: copiedLinkExamId === ex.id ? '#15803D' : '#1D4ED8',
+                                border: '1px solid #BFDBFE',
+                                borderRadius: '5px',
+                                padding: '2px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {copiedLinkExamId === ex.id ? '✓ Link Copied!' : '🔗 Copy Shareable Link'}
+                            </button>
                           </div>
                         </td>
                         <td style={{ padding: '12px 14px' }}>{ex.department}</td>
@@ -1811,6 +1891,158 @@ export default function AdminConsolePage() {
       </div>
     )}
 
+        {/* TAB 7: FEEDBACK & STUDENT RESPONSES */}
+        {activeTab === 'feedback' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0A1B38', margin: 0 }}>
+                  Candidate Feedback &amp; Custom Question Responses
+                </h2>
+                <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '4px 0 0' }}>
+                  Review experience ratings, technical issues, and candidate responses to your custom post-exam questions.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <select
+                  value={feedbackExamFilter}
+                  onChange={e => {
+                    setFeedbackExamFilter(e.target.value);
+                    loadFeedback(e.target.value);
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.84rem',
+                    background: '#FFFFFF',
+                    color: '#0A1B38',
+                    fontWeight: 600
+                  }}
+                >
+                  <option value="">All Examinations</option>
+                  {exams.map(ex => (
+                    <option key={ex.id} value={ex.id}>{ex.code} - {ex.title}</option>
+                  ))}
+                </select>
+
+                <a
+                  href={`/api/assess/admin/feedback?format=csv${feedbackExamFilter ? `&examId=${encodeURIComponent(feedbackExamFilter)}` : ''}`}
+                  download
+                  style={{
+                    background: '#0A1B38',
+                    color: '#FFFFFF',
+                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  📥 Export CSV
+                </a>
+              </div>
+            </div>
+
+            {feedbackLoading ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#64748B', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                Loading feedback reports...
+              </div>
+            ) : feedbackList.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#64748B', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📋</div>
+                <div style={{ fontWeight: 700, color: '#0A1B38' }}>No Feedback or Question Responses Yet</div>
+                <div style={{ fontSize: '0.84rem', marginTop: '4px' }}>
+                  Candidate feedback and their answers to your custom post-exam question will automatically appear here once submitted.
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {feedbackList.map(item => (
+                  <div
+                    key={item.id}
+                    style={{
+                      background: '#FFFFFF',
+                      borderRadius: '16px',
+                      border: '1px solid #E2E8F0',
+                      padding: '24px',
+                      boxShadow: '0 2px 10px rgba(10, 27, 56, 0.03)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1rem', color: '#0A1B38' }}>
+                            {item.candidate_name || 'Candidate'}
+                          </span>
+                          <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
+                            &bull; {item.candidate_email}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#0284C7', fontWeight: 700 }}>
+                          {item.exam_title || item.exam_id}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ background: '#E0F2FE', color: '#0369A1', padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 800 }}>
+                          Overall: {item.overall_rating} / 5 ★
+                        </span>
+                        <span style={{ background: '#F1F5F9', color: '#475569', padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700 }}>
+                          Navigation: {item.navigation_rating} / 5
+                        </span>
+                        <span style={{ fontSize: '0.74rem', color: '#94A3B8' }}>
+                          {new Date(item.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Custom Question & Candidate Answer Section */}
+                    {item.custom_question_response ? (
+                      <div style={{
+                        background: '#F0FDF4',
+                        border: '1.5px solid #86EFAC',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        marginBottom: '16px'
+                      }}>
+                        <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                          Examiner Question: {item.custom_question_prompt || 'Admin Custom Question'}
+                        </div>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 600, color: '#0A1B38', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                          {item.custom_question_response}
+                        </div>
+                      </div>
+                    ) : item.custom_question_prompt ? (
+                      <div style={{ background: '#F8FAFC', border: '1px dashed #CBD5E1', borderRadius: '10px', padding: '12px', marginBottom: '14px', fontSize: '0.82rem', color: '#64748B' }}>
+                        <strong>Examiner Question Prompt:</strong> {item.custom_question_prompt} <em style={{ marginLeft: 6 }}>(No response provided)</em>
+                      </div>
+                    ) : null}
+
+                    {/* Liked & Improvements */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px', fontSize: '0.84rem' }}>
+                      {item.liked_aspects && (
+                        <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '10px 12px', border: '1px solid #E2E8F0' }}>
+                          <strong style={{ color: '#0A1B38' }}>Liked Most:</strong> {item.liked_aspects}
+                        </div>
+                      )}
+                      {item.improvement_suggestions && (
+                        <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '10px 12px', border: '1px solid #E2E8F0' }}>
+                          <strong style={{ color: '#0A1B38' }}>Improvement Ideas:</strong> {item.improvement_suggestions}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* MODAL: CREATE EXAM */}
         {showCreateExamModal && (
           <div style={{
@@ -1819,7 +2051,31 @@ export default function AdminConsolePage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px'
           }}>
             <div style={{ background: '#FFF', borderRadius: '16px', maxWidth: '640px', width: '100%', padding: '28px', maxHeight: '90vh', overflowY: 'auto' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0A1B38', marginBottom: '16px' }}>Create New Examination</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0A1B38', margin: 0 }}>Create New Examination</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateExamModal(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748B' }}
+                >
+                  &times;
+                </button>
+              </div>
+
+              {modalError && (
+                <div style={{
+                  background: '#FEF2F2',
+                  border: '1px solid #FCA5A5',
+                  color: '#991B1B',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  fontSize: '0.86rem',
+                  marginBottom: '16px'
+                }}>
+                  {modalError}
+                </div>
+              )}
+
               <form onSubmit={handleCreateExam} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
                   <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Exam Title</label>
@@ -1967,9 +2223,41 @@ export default function AdminConsolePage() {
                   </div>
                 </div>
 
+                {/* Custom Post-Exam Question for Students */}
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0A1B38', display: 'block', marginBottom: '2px' }}>
+                    Custom Post-Exam Question for Students (Optional)
+                  </label>
+                  <p style={{ fontSize: '0.74rem', color: '#64748B', margin: '0 0 6px' }}>
+                    Ask an open-ended question that candidates must answer right after finishing the exam (e.g. explain your technical approach, provide GitHub/portfolio links, or summarize your logic). Responses will be saved and displayed in your Feedback &amp; Responses report.
+                  </p>
+                  <textarea
+                    rows={2}
+                    value={examForm.customPostExamQuestion}
+                    onChange={e => setExamForm({ ...examForm, customPostExamQuestion: e.target.value })}
+                    placeholder="e.g. Briefly describe the time complexity and trade-offs of your algorithm solution..."
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.86rem', boxSizing: 'border-box' }}
+                  />
+                </div>
+
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '14px' }}>
                   <button type="button" onClick={() => setShowCreateExamModal(false)} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#F1F5F9', cursor: 'pointer' }}>Cancel</button>
-                  <button type="submit" style={{ padding: '8px 20px', borderRadius: '6px', border: 'none', background: '#0A1B38', color: '#FFF', fontWeight: 700, cursor: 'pointer' }}>Create Exam</button>
+                  <button
+                    type="submit"
+                    disabled={creatingExam}
+                    style={{
+                      padding: '8px 20px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: '#0A1B38',
+                      color: '#FFF',
+                      fontWeight: 700,
+                      cursor: creatingExam ? 'not-allowed' : 'pointer',
+                      opacity: creatingExam ? 0.7 : 1
+                    }}
+                  >
+                    {creatingExam ? 'Creating Exam...' : 'Create Exam'}
+                  </button>
                 </div>
               </form>
             </div>

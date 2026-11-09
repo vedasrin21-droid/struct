@@ -8,7 +8,7 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { emailOrId, password } = body;
+    const { emailOrId, password, examCode } = body;
 
     if (!emailOrId || !password || typeof emailOrId !== 'string' || typeof password !== 'string') {
       return NextResponse.json(
@@ -124,74 +124,116 @@ export async function POST(request: Request) {
       return response;
     }
 
-    // 6. Section 8: Determine Assigned Examination Flow
-    // Look up assigned institutional examination
-    const assignment = await db.queryOne<{ exam_id: string; title: string; exam_status: string }>(
-      `SELECT ea.exam_id, e.title, e.status as exam_status
+    // 6. Section 8: Multi-Role / Multi-Exam Aware Routing
+    const cleanExamCode = typeof examCode === 'string' ? examCode.trim().toUpperCase() : '';
+
+    // Fetch all examinations assigned to this candidate
+    const assignedExamsResult = await db.query<{ exam_id: string; title: string; code: string; exam_status: string }>(
+      `SELECT ea.exam_id, e.title, e.code, e.status as exam_status
        FROM exam_assignments ea
        JOIN exams e ON ea.exam_id = e.id
        WHERE ea.candidate_id = $1
-       ORDER BY ea.assigned_at DESC
-       LIMIT 1`,
+       ORDER BY ea.assigned_at DESC`,
       [userRow.id]
     );
+    const assignedExams = assignedExamsResult.rows;
 
     let redirectUrl = '';
-    let examInfo = null;
+    let examInfo: any = null;
 
-    if (!assignment) {
-      // Check if user has an active attempt in any published exam
-      const latestAttempt = await db.queryOne<{ exam_id: string; status: string }>(
-        `SELECT a.exam_id, a.status
-         FROM attempts a
-         WHERE a.candidate_id = $1
-         ORDER BY a.created_at DESC
-         LIMIT 1`,
-        [userRow.id]
+    // Case A: Specific exam code provided (e.g. from ?code=EXAM_CODE direct shareable link)
+    if (cleanExamCode) {
+      const targetExam = await db.queryOne<{ id: string; title: string; code: string; status: string }>(
+        'SELECT id, title, code, status FROM exams WHERE UPPER(code) = UPPER($1)',
+        [cleanExamCode]
       );
 
-      if (latestAttempt) {
-        if (latestAttempt.status === 'submitted') {
-          redirectUrl = `/assess/completed/${latestAttempt.exam_id}`;
+      if (targetExam) {
+        examInfo = { id: targetExam.id, title: targetExam.title, code: targetExam.code };
+
+        // Ensure candidate has assignment for this target exam
+        const isAssigned = assignedExams.some(a => a.exam_id === targetExam.id);
+        if (!isAssigned) {
+          await db.execute(
+            `INSERT INTO exam_assignments (id, exam_id, candidate_id, assigned_at, status)
+             VALUES ($1, $2, $3, $4, 'assigned')
+             ON CONFLICT (exam_id, candidate_id) DO NOTHING`,
+            [`asg_${targetExam.id}_${userRow.id}`, targetExam.id, userRow.id, now]
+          );
+        }
+
+        // Determine destination based on attempt status
+        const attempt = await db.queryOne<{ id: string; status: string }>(
+          'SELECT id, status FROM attempts WHERE candidate_id = $1 AND exam_id = $2',
+          [userRow.id, targetExam.id]
+        );
+
+        if (!attempt) {
+          redirectUrl = `/assess/instructions/${targetExam.id}`;
+        } else if (attempt.status === 'submitted') {
+          redirectUrl = `/assess/completed/${targetExam.id}`;
+        } else if (attempt.status === 'in_progress') {
+          redirectUrl = `/assess/exam/${targetExam.id}`;
         } else {
-          redirectUrl = `/assess/exam/${latestAttempt.exam_id}`;
+          redirectUrl = `/assess/instructions/${targetExam.id}`;
+        }
+      }
+    }
+
+    // Case B: No code or target not resolved yet
+    if (!redirectUrl) {
+      if (assignedExams.length > 1) {
+        // Multi-role candidate: candidate is assigned to multiple exams/roles
+        // Route to candidate dashboard where all examinations are listed with their status
+        redirectUrl = '/assess/candidate';
+      } else if (assignedExams.length === 1) {
+        // Exactly one assigned exam
+        const single = assignedExams[0];
+        examInfo = { id: single.exam_id, title: single.title, code: single.code };
+
+        const attempt = await db.queryOne<{ id: string; status: string }>(
+          'SELECT id, status FROM attempts WHERE candidate_id = $1 AND exam_id = $2',
+          [userRow.id, single.exam_id]
+        );
+
+        if (!attempt) {
+          redirectUrl = `/assess/instructions/${single.exam_id}`;
+        } else if (attempt.status === 'submitted') {
+          redirectUrl = `/assess/completed/${single.exam_id}`;
+        } else if (attempt.status === 'in_progress') {
+          redirectUrl = `/assess/exam/${single.exam_id}`;
+        } else {
+          redirectUrl = `/assess/instructions/${single.exam_id}`;
         }
       } else {
-        // No examination assigned
-        const response = NextResponse.json({
-          success: true,
-          user: userProfile,
-          hasAssignedExam: false,
-          error: 'No examination has been assigned to your account. Please contact your organization proctor or coordinator.',
-          redirectUrl: null,
-        }, { status: 200 });
+        // No current assignment found -> check if past attempts exist
+        const latestAttempt = await db.queryOne<{ exam_id: string; status: string }>(
+          `SELECT a.exam_id, a.status
+           FROM attempts a
+           WHERE a.candidate_id = $1
+           ORDER BY a.created_at DESC
+           LIMIT 1`,
+          [userRow.id]
+        );
 
-        setSessionCookies(response, token);
-        return response;
-      }
-    } else {
-      examInfo = {
-        id: assignment.exam_id,
-        title: assignment.title,
-      };
+        if (latestAttempt) {
+          if (latestAttempt.status === 'submitted') {
+            redirectUrl = `/assess/completed/${latestAttempt.exam_id}`;
+          } else {
+            redirectUrl = `/assess/exam/${latestAttempt.exam_id}`;
+          }
+        } else {
+          const response = NextResponse.json({
+            success: true,
+            user: userProfile,
+            hasAssignedExam: false,
+            error: 'No examination has been assigned to your account. Please contact your organization proctor or coordinator.',
+            redirectUrl: null,
+          }, { status: 200 });
 
-      // Check existing attempt
-      const attempt = await db.queryOne<{ id: string; status: string; deadline_time: number | bigint }>(
-        `SELECT id, status, deadline_time FROM attempts WHERE candidate_id = $1 AND exam_id = $2`,
-        [userRow.id, assignment.exam_id]
-      );
-
-      if (!attempt) {
-        // Examination has not started -> Instructions page
-        redirectUrl = `/assess/instructions/${assignment.exam_id}`;
-      } else if (attempt.status === 'submitted') {
-        // Already completed
-        redirectUrl = `/assess/completed/${assignment.exam_id}`;
-      } else if (attempt.status === 'in_progress') {
-        // Active in-progress attempt -> Resume live examination
-        redirectUrl = `/assess/exam/${assignment.exam_id}`;
-      } else {
-        redirectUrl = `/assess/instructions/${assignment.exam_id}`;
+          setSessionCookies(response, token);
+          return response;
+        }
       }
     }
 
@@ -238,3 +280,4 @@ function setSessionCookies(response: NextResponse, token: string) {
     maxAge,
   });
 }
+

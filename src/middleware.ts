@@ -10,6 +10,17 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
   const pathname = req.nextUrl.pathname;
   const examToken = req.cookies.get('struct_exam_token')?.value || req.cookies.get('talvyn_assess_token')?.value;
 
+  // 0. Temporary Feature Launch Redirects (Prioritizing ECELL Hiring Launch)
+  const isFeatureRedirect =
+    pathname.startsWith('/resume-builder') ||
+    pathname.startsWith('/ats-checker') ||
+    pathname.startsWith('/career-tools') ||
+    pathname.startsWith('/interview-portal');
+
+  if (isFeatureRedirect) {
+    return NextResponse.redirect(new URL('/launching-soon', req.url));
+  }
+
   // 1. If signed in, prevent getting stuck on auth pages unless explicitly requesting a new account or sign in
   if (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')) {
     const isExplicit = req.nextUrl.searchParams.has('new') || req.nextUrl.searchParams.has('switch');
@@ -22,9 +33,9 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
   }
 
   // 2. Protect Admin Portal
-  if (pathname.startsWith('/assess/admin')) {
+  if (pathname.startsWith('/assess/admin') || pathname.startsWith('/admin/ecell')) {
     if (!examToken) {
-      const signInUrl = new URL('/sign-in', req.url);
+      const signInUrl = new URL('/ecell/login', req.url);
       signInUrl.searchParams.set('redirect_url', pathname);
       return NextResponse.redirect(signInUrl);
     }
@@ -37,6 +48,8 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
       const { clerkMiddleware, createRouteMatcher } = await import('@clerk/nextjs/server');
       const isPublicRoute = createRouteMatcher([
         '/',
+        '/career-tools(.*)',
+        '/ats-checker(.*)',
         '/resume-builder(.*)',
         '/terms(.*)',
         '/privacy(.*)',

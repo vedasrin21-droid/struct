@@ -166,7 +166,7 @@ export function CategoriesSection() {
 
               <div>
                 <Link
-                  href="/dashboard"
+                  href="/launching-soon"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -177,7 +177,7 @@ export function CategoriesSection() {
                     textDecoration: 'none',
                   }}
                 >
-                  <span>Practice Tests in this Track &rarr;</span>
+                  <span>Practice Tests in this Track (Launch: 16 Nov) &rarr;</span>
                 </Link>
               </div>
             </div>
@@ -187,3 +187,4 @@ export function CategoriesSection() {
     </section>
   );
 }
+

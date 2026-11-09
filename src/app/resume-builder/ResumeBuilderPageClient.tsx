@@ -94,7 +94,19 @@ export default function ResumeBuilderPageClient() {
               Home
             </Link>
             <Link
-              href="/#resume-checker"
+              href="/career-tools"
+              style={{
+                fontSize: '0.86rem',
+                fontWeight: 600,
+                color: '#475569',
+                textDecoration: 'none',
+                transition: 'color 0.15s ease'
+              }}
+            >
+              Career Tools
+            </Link>
+            <Link
+              href="/ats-checker"
               style={{
                 fontSize: '0.86rem',
                 fontWeight: 600,
@@ -159,8 +171,8 @@ export default function ResumeBuilderPageClient() {
       {/* Main Builder Canvas */}
       <main style={{ flex: 1, width: '100%' }}>
         <ResumeBuilder
-          onBackToResults={() => router.push('/#resume-checker')}
-          onBackToChecker={() => router.push('/#resume-checker')}
+          onBackToResults={() => router.push('/ats-checker')}
+          onBackToChecker={() => router.push('/ats-checker')}
         />
       </main>
     </div>
