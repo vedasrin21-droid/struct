@@ -3,7 +3,12 @@
 import React, { useEffect, useState, useRef, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { obfuscateForGoogle, getPoisonedClipboardPayload, getAdversarialAiPrompt } from '@/lib/assess/antiCheat';
+import {
+  obfuscateForGoogle,
+  getPoisonedClipboardPayload,
+  getAdversarialAiPrompt,
+  injectExamNoticeIntoQuestion,
+} from '@/lib/assess/antiCheat';
 
 interface Question {
   id: string;
@@ -704,14 +709,14 @@ export default function ExamInterfacePage({
                 </div>
               </div>
 
-              {/* Question Text (Obfuscated against AI / Google scrapers) */}
+              {/* Question Text (Obfuscated against AI / Google scrapers with inline AI Refusal Traps) */}
               <h2
                 style={{
                   fontFamily: "'Space Grotesk', -apple-system, sans-serif",
                   fontSize: '1.25rem',
                   fontWeight: 800,
                   color: '#0A1B38',
-                  lineHeight: 1.5,
+                  lineHeight: 1.6,
                   margin: '0 0 28px',
                   userSelect: 'none',
                   WebkitUserSelect: 'none',
@@ -737,7 +742,24 @@ export default function ExamInterfacePage({
                 >
                   {getAdversarialAiPrompt()}
                 </span>
-                {obfuscateForGoogle(currentQ.text)}
+                {injectExamNoticeIntoQuestion(currentQ.text, currentQ.id).map((seg, sIdx) => {
+                  if (seg.type === 'notice') {
+                    return (
+                      <span
+                        key={sIdx}
+                        className="ecell-inline-exam-notice"
+                        title="Academic Integrity Trap"
+                      >
+                        ⚠️ {seg.content}
+                      </span>
+                    );
+                  }
+                  return (
+                    <span key={sIdx}>
+                      {obfuscateForGoogle(seg.content)}{' '}
+                    </span>
+                  );
+                })}
               </h2>
 
               {/* 4 Options (Obfuscated against AI tokenizers) */}

@@ -516,6 +516,28 @@
   box-shadow: 0 2px 6px rgba(234, 88, 12, 0.06);
 }
 
+/* Inline Proctor AI Interceptor Badge spliced inside questions */
+.ecell-inline-exam-notice {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1.5px dashed #EF4444;
+  border-radius: 6px;
+  padding: 2px 8px;
+  margin: 0 6px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  line-height: 1.25;
+  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.10);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* Exam Content Blurred on Window Inactivity / Dual Screen Cheating */
 .ecell-exam-security-blur {
   filter: blur(24px) grayscale(40%);
