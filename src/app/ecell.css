@@ -473,6 +473,82 @@
   color: #8993A4;
 }
 
+/* ========================================================
+   ANTI-CHEAT, ANTI-OCR & AI REFUSAL SECURITY SUBSYSTEM
+   ======================================================== */
+
+/* Full-Screen Repeating Watermark Overlay */
+.ecell-screen-watermark-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 38;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Optical Camera Moiré Interference Mesh */
+.ecell-moiré-mesh {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 39;
+  opacity: 0.035;
+  background-image: radial-gradient(circle at 1px 1px, #0A1B38 1px, transparent 0);
+  background-size: 14px 14px;
+}
+
+/* AI Refusal & Academic Integrity Directive Banner */
+.ecell-ai-directive-banner {
+  background: #FFF7ED;
+  border: 1.5px solid #FED7AA;
+  border-left: 5px solid #EA580C;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.06);
+}
+
+/* Exam Content Blurred on Window Inactivity / Dual Screen Cheating */
+.ecell-exam-security-blur {
+  filter: blur(24px) grayscale(40%);
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.15s ease-out;
+}
+
+/* Screen Capture Flasher Blanket */
+.ecell-screen-flash-blanket {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #0A1B38;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+/* Block Printing & PDF Export completely */
+@media print {
+  body, html {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
 /* Responsive Media Queries */
 @media (max-width: 860px) {
   .ecell-exam-container {
