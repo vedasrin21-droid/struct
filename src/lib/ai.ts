@@ -7,15 +7,39 @@ interface AiEnhancementOptions {
   deterministicResult: AnalysisResult;
 }
 
+function parseJsonSafely(raw: string): any {
+  if (!raw) return null;
+  const cleaned = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
 export async function enhanceWithAiIfAvailable(
   options: AiEnhancementOptions
 ): Promise<AnalysisResult> {
   const { resumeText, targetJobTitle, targetJobDescription, deterministicResult } = options;
 
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const openAiKey = process.env.OPENAI_API_KEY;
 
-  if (!geminiKey && !openAiKey) {
+  if (!openRouterKey && !geminiKey && !openAiKey) {
     // Return honestly labelled deterministic report
     return deterministicResult;
   }
@@ -57,7 +81,50 @@ Output strictly valid JSON matching this schema:
 }`;
 
   try {
-    // 1. Try Gemini if configured
+    // 1. Try OpenRouter (Claude) if configured - High capacity, large context usage
+    if (openRouterKey) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const claudeModel = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4.5';
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openRouterKey}`,
+            'HTTP-Referer': 'https://struct.careers',
+            'X-Title': 'STRUCT Platform',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: claudeModel,
+            messages: [{ role: 'user', content: prompt }],
+            response_format: { type: 'json_object' },
+            temperature: 0.2,
+          }),
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content;
+          if (content) {
+            const parsed = parseJsonSafely(content);
+            if (parsed) {
+              return applyAiEnhancements(deterministicResult, parsed, `AI-Enhanced (${claudeModel.split('/')[1] || 'Claude'})`);
+            }
+          }
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          console.warn('[Talvyn AI] OpenRouter Claude call failed, falling back:', errData);
+        }
+      } catch (openRouterErr) {
+        console.warn('[Talvyn AI] OpenRouter timeout or network issue, falling back:', openRouterErr);
+      }
+    }
+
+    // 2. Try Gemini if configured
     if (geminiKey) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -83,13 +150,15 @@ Output strictly valid JSON matching this schema:
         const data = await response.json();
         const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (textContent) {
-          const parsed = JSON.parse(textContent);
-          return applyAiEnhancements(deterministicResult, parsed, 'AI-Enhanced (Gemini Flash)');
+          const parsed = parseJsonSafely(textContent);
+          if (parsed) {
+            return applyAiEnhancements(deterministicResult, parsed, 'AI-Enhanced (Gemini Flash)');
+          }
         }
       }
     }
 
-    // 2. Try OpenAI if configured
+    // 3. Try OpenAI if configured
     if (openAiKey) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -114,8 +183,10 @@ Output strictly valid JSON matching this schema:
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content;
         if (content) {
-          const parsed = JSON.parse(content);
-          return applyAiEnhancements(deterministicResult, parsed, 'AI-Enhanced (GPT-4o Mini)');
+          const parsed = parseJsonSafely(content);
+          if (parsed) {
+            return applyAiEnhancements(deterministicResult, parsed, 'AI-Enhanced (GPT-4o Mini)');
+          }
         }
       }
     }
